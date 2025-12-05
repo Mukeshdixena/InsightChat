@@ -29,10 +29,12 @@ export class AuthService {
   }
 
   getCurrentUser() {
-    return {
-      _id: localStorage.getItem('userId'),
-      username: localStorage.getItem('username')
-    };
+    const userId = localStorage.getItem('userId');
+    const username = localStorage.getItem('username');
+    if (!userId || userId === 'undefined') {
+      return null;
+    }
+    return { _id: userId, username: username };
   }
 
   getToken() {

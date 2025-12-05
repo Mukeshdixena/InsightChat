@@ -26,7 +26,12 @@ export class ChatListComponent implements OnInit {
     }
 
     fetchChats() {
-        if (!this.currentUser) return;
+        if (!this.currentUser || !this.currentUser._id) {
+            console.warn("User not logged in or ID missing, retrying in 1s");
+            // Retry mechanics or redirect to login? 
+            // For now, just stop.
+            return;
+        }
 
         this.http.get(`http://localhost:3000/chat/${this.currentUser._id}`).subscribe({
             next: (data: any) => {

@@ -12,7 +12,11 @@ const messageRoutes = require("./routes/messages");
 const chatRoutes = require("./routes/chat");
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 
 const MONGO_URL = process.env.MONGO_URL;
@@ -36,6 +40,10 @@ io.on("connection", (socket) => {
   console.log("Connected to socket.io");
 
   socket.on("setup", (userData) => {
+    if (!userData || !userData._id) {
+      console.warn("Socket setup failed: missing userData or _id");
+      return;
+    }
     socket.join(userData._id);
     socket.emit("connected");
   });
@@ -62,7 +70,7 @@ io.on("connection", (socket) => {
 
   socket.off("setup", () => {
     console.log("USER DISCONNECTED");
-    socket.leave(userData._id);
+    // socket.leave(userData._id); // userData is not defined in this scope
   });
 });
 

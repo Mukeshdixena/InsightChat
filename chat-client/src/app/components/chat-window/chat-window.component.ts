@@ -18,6 +18,9 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     newMessage: string = "";
     currentUser: any;
 
+    typing: boolean = false;
+    isTyping: boolean = false;
+
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
     constructor(
@@ -36,17 +39,44 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
                 this.scrollToBottom();
             }
         });
+
+        this.socketService.typing().subscribe(() => {
+            this.isTyping = true;
+        });
+
+        this.socketService.stopTypingListener().subscribe(() => {
+            this.isTyping = false;
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['chat'] && this.chat) {
             this.fetchMessages();
             this.socketService.joinChat(this.chat._id);
+            this.isTyping = false;
         }
     }
 
     ngAfterViewChecked() {
         this.scrollToBottom();
+    }
+
+    typingHandler() {
+        if (!this.typing) {
+            this.typing = true;
+            this.socketService.sendTyping(this.chat._id);
+        }
+
+        let lastTypingTime = new Date().getTime();
+        var timerLength = 3000;
+        setTimeout(() => {
+            var timeNow = new Date().getTime();
+            var timeDiff = timeNow - lastTypingTime;
+            if (timeDiff >= timerLength && this.typing) {
+                this.socketService.stopTyping(this.chat._id);
+                this.typing = false;
+            }
+        }, timerLength);
     }
 
     fetchMessages() {
@@ -62,14 +92,14 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     sendMessage() {
         if (!this.newMessage.trim()) return;
 
+        this.socketService.stopTyping(this.chat._id);
+        this.typing = false;
+
         const messageData = {
             content: this.newMessage,
             chatId: this.chat._id,
             userId: this.currentUser._id
         };
-
-        // Optimistic update
-        // this.messages.push({ ...messageData, sender: this.currentUser, createdAt: new Date() });
 
         this.http.post('http://localhost:3000/messages', messageData).subscribe({
             next: (data: any) => {
