@@ -1,0 +1,19 @@
+<div class="profile-container">
+  <div class="profile-card">
+
+    <div class="avatar">{{ username[0] | uppercase }}</div>
+
+    <h2>{{ username }}</h2>
+
+    <input [(ngModel)]="newUsername" placeholder="Update username" />
+
+    <input [(ngModel)]="newPassword" type="password" placeholder="Update password" />
+
+    <button class="btn" (click)="updateProfile()">Save Changes</button>
+
+    <p class="success" *ngIf="message">{{ message }}</p>
+
+    <button class="logout-btn" (click)="logout()">Logout</button>
+
+  </div>
+</div>

@@ -7,15 +7,19 @@ export class AuthService {
   async login(username: string, password: string) {
     const res = await api.post('/auth/login', { username, password });
     const token = res.data.token;
-
     localStorage.setItem('token', token);
     localStorage.setItem('username', username);
-
     return res.data;
   }
 
   async signup(username: string, password: string) {
     const res = await api.post('/auth/signup', { username, password });
+    return res.data;
+  }
+
+  async updateProfile(username: string, password: string) {
+    const res = await api.put('/auth/update', { username, password });
+    if (username) localStorage.setItem('username', username);
     return res.data;
   }
 

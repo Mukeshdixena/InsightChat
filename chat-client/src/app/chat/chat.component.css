@@ -133,3 +133,38 @@
 .send-btn:hover {
   background: #1e54e8;
 }
+.user-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-btn {
+  background: transparent;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.menu-list {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background: white;
+  color: black;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+}
+
+.menu-list p {
+  margin: 0;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.menu-list p:hover {
+  background: #eee;
+}

@@ -24,7 +24,7 @@ export class ChatComponent implements OnInit {
   constructor(
     private socket: SocketService,
     private auth: AuthService
-  ) {}
+  ) { }
 
   async ngOnInit() {
     this.username = this.auth.getUsername() || 'Guest';
@@ -61,6 +61,23 @@ export class ChatComponent implements OnInit {
     try {
       this.scrollContainer.nativeElement.scrollTop =
         this.scrollContainer.nativeElement.scrollHeight;
-    } catch {}
+    } catch { }
   }
+
+
+  menuOpen = false;
+
+  toggleMenu() {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  openProfile() {
+    window.location.href = '/profile';
+  }
+
+  logout() {
+    this.auth.logout();
+    window.location.href = '/login';
+  }
+
 }

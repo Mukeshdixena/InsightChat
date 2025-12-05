@@ -4,18 +4,27 @@
   <header class="chat-header">
     <div class="title">Public Chat Room</div>
 
-    <div class="user-info">
-      <span class="user-circle">{{ username[0] | uppercase }}</span>
-      <span class="username">{{ username }}</span>
+    <div class="user-menu">
+  <div class="user-circle">{{ username[0] | uppercase }}</div>
+
+  <div class="dropdown" [class.open]="menuOpen">
+    <button class="menu-btn" (click)="toggleMenu()">
+      {{ username }} ▼
+    </button>
+
+    <div class="menu-list" *ngIf="menuOpen">
+      <p (click)="openProfile()">Profile</p>
+      <p (click)="logout()">Logout</p>
     </div>
+  </div>
+</div>
+
   </header>
+
 
   <!-- MESSAGES BOX -->
   <div class="messages-box" #scrollMe>
-    <div 
-      *ngFor="let msg of messages" 
-      class="message-row"
-      [ngClass]="{ 'own': msg.from === username }">
+    <div *ngFor="let msg of messages" class="message-row" [ngClass]="{ 'own': msg.from === username }">
 
       <div class="message-bubble">
         <div class="sender">{{ msg.from }}</div>
@@ -28,11 +37,7 @@
 
   <!-- INPUT AREA -->
   <footer class="input-area">
-    <input
-      [(ngModel)]="message"
-      (keyup.enter)="send()"
-      placeholder="Type a message..."
-    />
+    <input [(ngModel)]="message" (keyup.enter)="send()" placeholder="Type a message..." />
     <button class="send-btn" (click)="send()">Send</button>
   </footer>
 
