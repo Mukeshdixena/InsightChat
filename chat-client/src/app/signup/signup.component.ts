@@ -5,13 +5,13 @@ import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-signup',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  templateUrl: './signup.component.html',
+  styleUrls: ['./signup.component.css']
 })
-export class LoginComponent {
+export class SignupComponent {
   username = '';
   password = '';
 
@@ -19,14 +19,14 @@ export class LoginComponent {
 
   submit() {
     if (!this.username.trim() || !this.password) {
-      alert('Please enter username and password');
+      alert('Please provide username & password');
       return;
     }
 
-    this.auth.login(this.username, this.password).subscribe({
-      next: () => this.router.navigate(['/']),
+    this.auth.signup(this.username, this.password).subscribe({
+      next: () => this.router.navigate(['/login']),
       error: err => {
-        const msg = err?.error?.message || 'Login failed';
+        const msg = err?.error?.message || 'Signup failed';
         alert(msg);
       }
     });

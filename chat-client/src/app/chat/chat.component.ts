@@ -2,39 +2,47 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SocketService } from '../services/socket.service';
-
+import { AuthService } from '../services/auth.service';
 
 @Component({
-selector: 'app-chat',
-standalone: true,
-imports: [CommonModule, FormsModule],
-templateUrl: './chat.component.html',
-styleUrls: ['./chat.component.css']
+  selector: 'app-chat',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './chat.component.html',
+  styleUrls: ['./chat.component.css']
 })
 export class ChatComponent implements OnInit {
-message = '';
-messages: { from?: string; text: string; ts: number }[] = [];
-username = '';
 
+  message = '';
+  messages: { from: string; text: string; ts: number }[] = [];
+  username = '';
 
-constructor(private socket: SocketService) {}
+  constructor(
+    private socket: SocketService,
+    private auth: AuthService
+  ) {}
 
+  ngOnInit(): void {
+    // Get logged-in username
+    this.username = this.auth.getUsername() || 'Unknown';
 
-ngOnInit(): void {
-this.username = `User-${Math.floor(Math.random() * 9000) + 1000}`;
-this.socket.receiveMessages().subscribe((data) => {
-// data should be { from, text, ts }
-this.messages.push(data);
-// keep scroll behavior handled in template (optional)
-});
-}
+    // Load real-time messages
+    this.socket.receiveMessages().subscribe((data) => {
+      this.messages.push(data);
+    });
+  }
 
+  send() {
+    const trimmed = this.message.trim();
+    if (!trimmed) return;
 
-send() {
-const trimmed = this.message.trim();
-if (!trimmed) return;
-const payload = { from: this.username, text: trimmed, ts: Date.now() };
-this.socket.sendMessage(payload);
-this.message = '';
-}
+    const payload = {
+      from: this.username,
+      text: trimmed,
+      ts: Date.now()
+    };
+
+    this.socket.sendMessage(payload);
+    this.message = '';
+  }
 }

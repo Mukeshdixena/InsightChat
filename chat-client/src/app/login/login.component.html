@@ -1,1 +1,25 @@
-<p>login works!</p>
+<div class="auth-container">
+  <div class="auth-card" role="form" aria-labelledby="login-heading">
+    <h2 id="login-heading">Welcome Back</h2>
+    <p class="subtitle">Login to continue</p>
+
+    <form (ngSubmit)="submit()" autocomplete="on">
+      <div class="input-group">
+        <label for="username">Username</label>
+        <input id="username" [(ngModel)]="username" name="username" required placeholder="johndoe" />
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input id="password" [(ngModel)]="password" type="password" name="password" required placeholder="••••••••" />
+      </div>
+
+      <button class="btn-primary" type="submit">Login</button>
+    </form>
+
+    <p class="switch-text">
+      Not registered?
+      <a routerLink="/signup">Create an account</a>
+    </p>
+  </div>
+</div>

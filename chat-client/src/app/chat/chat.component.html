@@ -1,17 +1,21 @@
 <div class="chat-root">
-<header class="chat-header">Simple Angular Chat</header>
+  <header class="chat-header">
+    Welcome, {{ username }}
+  </header>
 
+  <div class="messages">
+    <div *ngFor="let msg of messages" class="message">
+      <strong>{{ msg.from }}:</strong> {{ msg.text }}
+      <div class="time">{{ msg.ts | date:'shortTime' }}</div>
+    </div>
+  </div>
 
-<div class="messages" id="messages">
-<div *ngFor="let m of messages" class="message">
-<div class="meta">{{ m.from }} • {{ m.ts | date:'shortTime' }}</div>
-<div class="text">{{ m.text }}</div>
-</div>
-</div>
-
-
-<div class="composer">
-<input [(ngModel)]="message" placeholder="Type a message..." />
-<button (click)="send()">Send</button>
-</div>
+  <div class="composer">
+    <input
+      [(ngModel)]="message"
+      placeholder="Type a message..."
+      (keyup.enter)="send()"
+    />
+    <button (click)="send()">Send</button>
+  </div>
 </div>

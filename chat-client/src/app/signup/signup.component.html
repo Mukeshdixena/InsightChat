@@ -1,0 +1,25 @@
+<div class="auth-container">
+  <div class="auth-card" role="form" aria-labelledby="signup-heading">
+    <h2 id="signup-heading">Create Account</h2>
+    <p class="subtitle">Join the chat community</p>
+
+    <form (ngSubmit)="submit()" autocomplete="on">
+      <div class="input-group">
+        <label for="su-username">Username</label>
+        <input id="su-username" [(ngModel)]="username" name="username" required placeholder="Choose a username" />
+      </div>
+
+      <div class="input-group">
+        <label for="su-password">Password</label>
+        <input id="su-password" [(ngModel)]="password" type="password" name="password" required placeholder="Create a password" />
+      </div>
+
+      <button class="btn-primary" type="submit">Sign Up</button>
+    </form>
+
+    <p class="switch-text">
+      Already have an account?
+      <a routerLink="/login">Login</a>
+    </p>
+  </div>
+</div>
