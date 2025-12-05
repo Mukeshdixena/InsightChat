@@ -11,7 +11,7 @@
       <input [(ngModel)]="password" type="password" placeholder="Password" />
     </div>
 
-    <button class="btn" (click)="signup()" [disabled]="loading">
+    <button class="btn-primary" (click)="signup()" [disabled]="loading">
       {{ loading ? "Loading..." : "Sign Up" }}
     </button>
 

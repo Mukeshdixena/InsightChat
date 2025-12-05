@@ -59,6 +59,7 @@ h2 {
   border-radius: 8px;
   border: 1px solid #dfe7ef;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .input-group input:focus {
