@@ -1,13 +1,15 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { CreateGroupComponent } from '../create-group/create-group.component';
+import { StartChatComponent } from '../start-chat/start-chat.component';
 
 @Component({
     selector: 'app-chat-list',
     standalone: true,
-    imports: [CommonModule, CreateGroupComponent],
+    imports: [CommonModule, CreateGroupComponent, StartChatComponent, FormsModule],
     templateUrl: './chat-list.component.html',
     styleUrls: ['./chat-list.component.css']
 })
@@ -16,6 +18,7 @@ export class ChatListComponent implements OnInit {
     chats: any[] = [];
     currentUser: any;
     showCreateGroup = false;
+    showStartChat = false;
 
     constructor(private http: HttpClient, private authService: AuthService) {
         this.currentUser = this.authService.getCurrentUser();
@@ -39,6 +42,15 @@ export class ChatListComponent implements OnInit {
             },
             error: (err) => console.error("Failed to fetch chats", err)
         });
+    }
+
+    searchText: string = '';
+
+    get filteredChats() {
+        if (!this.searchText) return this.chats;
+        return this.chats.filter(chat =>
+            this.getChatName(chat).toLowerCase().includes(this.searchText.toLowerCase())
+        );
     }
 
     getChatName(chat: any): string {
@@ -68,20 +80,16 @@ export class ChatListComponent implements OnInit {
     }
 
     startChat() {
-        const username = prompt("Enter username to chat with:");
-        if (!username) return;
+        this.showStartChat = true;
+    }
 
-        this.http.get(`http://localhost:3000/auth/users?search=${username}`).subscribe({
-            next: (users: any) => {
-                if (users.length > 0) {
-                    const user = users[0];
-                    this.createChat(user._id);
-                } else {
-                    alert("User not found");
-                }
-            },
-            error: (err) => alert("Failed to search user")
-        });
+    onChatStarted(user: any) {
+        this.createChat(user._id);
+        this.showStartChat = false;
+    }
+
+    cancelStartChat() {
+        this.showStartChat = false;
     }
 
     createChat(userId: string) {
