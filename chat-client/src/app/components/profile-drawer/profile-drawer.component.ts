@@ -19,14 +19,33 @@ export class ProfileDrawerComponent implements OnInit {
     newPassword = '';
     message = '';
     currentUser: any;
+    isDarkMode = false;
 
     constructor(private auth: AuthService, private router: Router) {
         this.currentUser = this.auth.getCurrentUser();
         this.username = this.currentUser?.username || '';
         this.newUsername = this.username;
+
+        // Initialize theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            this.isDarkMode = true;
+            document.body.classList.add('dark-theme');
+        }
     }
 
     ngOnInit() { }
+
+    toggleTheme() {
+        this.isDarkMode = !this.isDarkMode;
+        if (this.isDarkMode) {
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-theme');
+            localStorage.setItem('theme', 'light');
+        }
+    }
 
     async updateProfile() {
         this.message = '';

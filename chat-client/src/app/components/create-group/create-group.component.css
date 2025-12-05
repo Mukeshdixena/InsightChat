@@ -1,27 +1,26 @@
 .create-group-container {
     padding: 20px;
-    background: white;
+    background: var(--modal-bg);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     max-width: 500px;
     width: 90%;
     margin: 20px auto;
+    color: var(--text-color);
 }
-
-/* ... */
 
 .search-results {
     max-height: 300px;
     height: 300px;
     overflow-y: auto;
-    border: 1px solid #f0f2f5;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     margin-bottom: 15px;
 }
 
 h3 {
     margin-top: 0;
-    color: #111b21;
+    color: var(--text-color);
 }
 
 .form-group {
@@ -31,11 +30,13 @@ h3 {
 input {
     width: 100%;
     padding: 10px;
-    border: 1px solid #dfe7ef;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
     outline: none;
     box-sizing: border-box;
+    background-color: var(--input-bg);
+    color: var(--text-color);
 }
 
 .selected-users {
@@ -47,6 +48,7 @@ input {
 
 .user-pill {
     background: #e7f3ff;
+    /* Maybe keep this or add var */
     color: #007bff;
     padding: 4px 10px;
     border-radius: 16px;
@@ -61,14 +63,6 @@ input {
     font-weight: bold;
 }
 
-.search-results {
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid #f0f2f5;
-    border-radius: 6px;
-    margin-bottom: 15px;
-}
-
 .user-item {
     display: flex;
     align-items: center;
@@ -77,13 +71,13 @@ input {
 }
 
 .user-item:hover {
-    background: #f5f6f6;
+    background: var(--hover-bg);
 }
 
 .avatar {
     width: 30px;
     height: 30px;
-    background: #dfe7ef;
+    background: var(--avatar-bg);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -91,6 +85,7 @@ input {
     margin-right: 10px;
     font-size: 12px;
     font-weight: bold;
+    color: var(--avatar-text);
 }
 
 .actions {
@@ -100,7 +95,7 @@ input {
 }
 
 .btn-primary {
-    background: #00a884;
+    background: var(--primary-color);
     color: white;
     border: none;
     padding: 8px 16px;
@@ -115,8 +110,9 @@ input {
 
 .btn-secondary {
     background: transparent;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
     padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
+    color: var(--text-color);
 }

@@ -5,11 +5,12 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { CreateGroupComponent } from '../create-group/create-group.component';
 import { StartChatComponent } from '../start-chat/start-chat.component';
+import { ProfileDrawerComponent } from '../profile-drawer/profile-drawer.component';
 
 @Component({
     selector: 'app-chat-list',
     standalone: true,
-    imports: [CommonModule, CreateGroupComponent, StartChatComponent, FormsModule],
+    imports: [CommonModule, CreateGroupComponent, StartChatComponent, ProfileDrawerComponent, FormsModule],
     templateUrl: './chat-list.component.html',
     styleUrls: ['./chat-list.component.css']
 })
@@ -19,6 +20,7 @@ export class ChatListComponent implements OnInit {
     currentUser: any;
     showCreateGroup = false;
     showStartChat = false;
+    showProfileDrawer = false;
 
     constructor(private http: HttpClient, private authService: AuthService) {
         this.currentUser = this.authService.getCurrentUser();
@@ -90,6 +92,14 @@ export class ChatListComponent implements OnInit {
 
     cancelStartChat() {
         this.showStartChat = false;
+    }
+
+    openProfile() {
+        this.showProfileDrawer = true;
+    }
+
+    closeProfile() {
+        this.showProfileDrawer = false;
     }
 
     createChat(userId: string) {

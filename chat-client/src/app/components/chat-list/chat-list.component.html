@@ -9,9 +9,13 @@
         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;">
     </app-start-chat>
 
+    <app-profile-drawer *ngIf="showProfileDrawer" (closeDrawer)="closeProfile()"
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20;">
+    </app-profile-drawer>
+
     <div class="header">
-        <div class="user-profile">
-            <div class="avatar">Me</div>
+        <div class="user-profile" (click)="openProfile()" style="cursor: pointer;">
+            <div class="avatar">{{ currentUser?.username?.charAt(0)?.toUpperCase() || 'Me' }}</div>
             <!-- Display current user name if available, e.g. {{ currentUser?.username }} -->
         </div>
         <div class="actions">
