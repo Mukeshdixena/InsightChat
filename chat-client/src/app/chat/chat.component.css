@@ -1,0 +1,9 @@
+.chat-root { max-width: 640px; margin: 24px auto; border: 1px solid #e6e6e6; padding: 12px; border-radius: 8px; }
+.chat-header { font-weight: 600; padding: 8px 0; }
+.messages { max-height: 60vh; overflow: auto; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 12px 8px; }
+.message { margin-bottom: 12px; }
+.meta { font-size: 11px; color: #777; }
+.text { background: #f4f6fb; display: inline-block; padding: 8px 10px; border-radius: 6px; margin-top: 4px; }
+.composer { display:flex; gap:8px; padding-top:12px }
+.composer input { flex:1; padding:8px;border-radius:6px;border:1px solid #ddd }
+.composer button { padding:8px 12px;border-radius:6px }
