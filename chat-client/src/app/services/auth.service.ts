@@ -1,30 +1,38 @@
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { tap } from "rxjs";
+import { Injectable } from '@angular/core';
+import { api } from '../config/api';
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private API = "http://localhost:3000/auth";
 
-  constructor(private http: HttpClient) {}
+  async login(username: string, password: string) {
+    const res = await api.post('/auth/login', { username, password });
+    const token = res.data.token;
 
-  signup(username: string, password: string) {
-    return this.http.post(`${this.API}/signup`, { username, password });
+    localStorage.setItem('token', token);
+    localStorage.setItem('username', username);
+
+    return res.data;
   }
 
-  login(username: string, password: string) {
-    return this.http.post<{ token: string }>(`${this.API}/login`, { username, password })
-      .pipe(
-        tap(res => {
-          localStorage.setItem("token", res.token);
-          localStorage.setItem("username", username);
-        })
-      );
+  async signup(username: string, password: string) {
+    const res = await api.post('/auth/signup', { username, password });
+    return res.data;
   }
 
-  getToken() { return localStorage.getItem("token"); }
-  getUsername() { return localStorage.getItem("username"); }
-  isLoggedIn() { return !!this.getToken(); }
+  getUsername() {
+    return localStorage.getItem('username') || '';
+  }
 
-  logout() { localStorage.clear(); }
+  getToken() {
+    return localStorage.getItem('token') || '';
+  }
+
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+  }
+
+  isLoggedIn() {
+    return !!localStorage.getItem('token');
+  }
 }

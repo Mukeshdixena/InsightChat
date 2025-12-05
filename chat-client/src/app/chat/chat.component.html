@@ -1,21 +1,39 @@
-<div class="chat-root">
+<div class="chat-container page-enter">
+
+  <!-- HEADER -->
   <header class="chat-header">
-    Welcome, {{ username }}
+    <div class="title">Public Chat Room</div>
+
+    <div class="user-info">
+      <span class="user-circle">{{ username[0] | uppercase }}</span>
+      <span class="username">{{ username }}</span>
+    </div>
   </header>
 
-  <div class="messages">
-    <div *ngFor="let msg of messages" class="message">
-      <strong>{{ msg.from }}:</strong> {{ msg.text }}
-      <div class="time">{{ msg.ts | date:'shortTime' }}</div>
+  <!-- MESSAGES BOX -->
+  <div class="messages-box" #scrollMe>
+    <div 
+      *ngFor="let msg of messages" 
+      class="message-row"
+      [ngClass]="{ 'own': msg.from === username }">
+
+      <div class="message-bubble">
+        <div class="sender">{{ msg.from }}</div>
+        <div class="text">{{ msg.text }}</div>
+        <div class="time">{{ msg.ts | date:'shortTime' }}</div>
+      </div>
+
     </div>
   </div>
 
-  <div class="composer">
+  <!-- INPUT AREA -->
+  <footer class="input-area">
     <input
       [(ngModel)]="message"
-      placeholder="Type a message..."
       (keyup.enter)="send()"
+      placeholder="Type a message..."
     />
-    <button (click)="send()">Send</button>
-  </div>
+    <button class="send-btn" (click)="send()">Send</button>
+  </footer>
+
 </div>

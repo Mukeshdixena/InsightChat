@@ -1,14 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -16,28 +15,26 @@ export class LoginComponent {
 
   username = '';
   password = '';
-  showPassword = false;
+  loading = false;
+  error = '';
 
-  constructor(
-    private auth: AuthService,
-    private router: Router,
-    private toast: ToastService
-  ) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
-  submit() {
-    this.auth.login(this.username, this.password).subscribe({
-      next: () => {
-        this.toast.showSuccess('Logged in successfully');
-        this.router.navigate(['/']);
-      },
-      error: err => {
-        const msg = err?.error?.message || 'Login failed';
-        this.toast.showError(msg);
-      }
-    });
+  async login() {
+    this.loading = true;
+    this.error = '';
+
+    try {
+      await this.auth.login(this.username, this.password);
+      this.router.navigate(['/chat']);
+    } catch {
+      this.error = 'Invalid credentials';
+    }
+
+    this.loading = false;
   }
 
-  gotoSignup() {
+  goSignup() {
     this.router.navigate(['/signup']);
   }
 }

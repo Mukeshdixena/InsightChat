@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SocketService } from '../services/socket.service';
 import { AuthService } from '../services/auth.service';
+import { api } from '../config/api';
+import { AppConfig } from '../config/app.config';
 
 @Component({
   selector: 'app-chat',
@@ -14,35 +16,51 @@ import { AuthService } from '../services/auth.service';
 export class ChatComponent implements OnInit {
 
   message = '';
-  messages: { from: string; text: string; ts: number }[] = [];
+  messages: any[] = [];
   username = '';
+
+  @ViewChild('scrollMe') scrollContainer!: ElementRef;
 
   constructor(
     private socket: SocketService,
     private auth: AuthService
   ) {}
 
-  ngOnInit(): void {
-    // Get logged-in username
-    this.username = this.auth.getUsername() || 'Unknown';
+  async ngOnInit() {
+    this.username = this.auth.getUsername() || 'Guest';
 
-    // Load real-time messages
-    this.socket.receiveMessages().subscribe((data) => {
-      this.messages.push(data);
+    try {
+      const res = await api.get('/messages');
+      this.messages = res.data;
+      setTimeout(() => this.scrollToBottom(), 50);
+    } catch {
+      console.error("Failed to load messages");
+    }
+
+    this.socket.receiveMessages().subscribe(msg => {
+      this.messages.push(msg);
+      setTimeout(() => this.scrollToBottom(), 50);
     });
   }
 
   send() {
-    const trimmed = this.message.trim();
-    if (!trimmed) return;
+    const text = this.message.trim();
+    if (!text) return;
 
     const payload = {
       from: this.username,
-      text: trimmed,
+      text,
       ts: Date.now()
     };
 
     this.socket.sendMessage(payload);
     this.message = '';
+  }
+
+  scrollToBottom() {
+    try {
+      this.scrollContainer.nativeElement.scrollTop =
+        this.scrollContainer.nativeElement.scrollHeight;
+    } catch {}
   }
 }

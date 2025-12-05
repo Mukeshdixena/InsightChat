@@ -1,31 +1,22 @@
-<div class="page-enter auth-container">
+<div class="auth-container">
   <div class="auth-card">
-    <h2>Welcome Back</h2>
-    <p class="subtitle">Login to continue</p>
 
-    <form (ngSubmit)="submit()">
-      <div class="input-group">
-        <label>Username</label>
-        <input [(ngModel)]="username" name="username" required placeholder="Enter username" />
-      </div>
+    <h2>Login</h2>
 
-      <div class="input-group password-wrapper">
-        <label>Password</label>
-        <input
-          [(ngModel)]="password"
-          name="password"
-          [type]="showPassword ? 'text' : 'password'"
-          required
-          placeholder="Enter password"
-        />
-        <span class="toggle-icon" (click)="showPassword = !showPassword">
-          {{ showPassword ? 'Hide' : 'Show' }}
-        </span>
-      </div>
+    <div class="input-group">
+      <input [(ngModel)]="username" placeholder="Username" />
+    </div>
 
-      <button class="btn-primary" type="submit">Login</button>
-    </form>
+    <div class="input-group">
+      <input [(ngModel)]="password" type="password" placeholder="Password" />
+    </div>
 
-    <button class="link-btn" (click)="gotoSignup()">Create an account</button>
+    <button class="btn" (click)="login()" [disabled]="loading">
+      {{ loading ? "Loading..." : "Login" }}
+    </button>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+
+    <p class="switch" (click)="goSignup()">Create an account</p>
   </div>
 </div>
