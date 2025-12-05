@@ -1,25 +1,31 @@
-<div class="auth-container">
-  <div class="auth-card" role="form" aria-labelledby="signup-heading">
-    <h2 id="signup-heading">Create Account</h2>
+<div class="page-enter auth-container">
+  <div class="auth-card">
+    <h2>Create Account</h2>
     <p class="subtitle">Join the chat community</p>
 
-    <form (ngSubmit)="submit()" autocomplete="on">
+    <form (ngSubmit)="submit()">
       <div class="input-group">
-        <label for="su-username">Username</label>
-        <input id="su-username" [(ngModel)]="username" name="username" required placeholder="Choose a username" />
+        <label>Username</label>
+        <input [(ngModel)]="username" name="username" required placeholder="Enter username" />
       </div>
 
-      <div class="input-group">
-        <label for="su-password">Password</label>
-        <input id="su-password" [(ngModel)]="password" type="password" name="password" required placeholder="Create a password" />
+      <div class="input-group password-wrapper">
+        <label>Password</label>
+        <input
+          [(ngModel)]="password"
+          name="password"
+          [type]="showPassword ? 'text' : 'password'"
+          required
+          placeholder="Create password"
+        />
+        <span class="toggle-icon" (click)="showPassword = !showPassword">
+          {{ showPassword ? 'Hide' : 'Show' }}
+        </span>
       </div>
 
       <button class="btn-primary" type="submit">Sign Up</button>
     </form>
 
-    <p class="switch-text">
-      Already have an account?
-      <a routerLink="/login">Login</a>
-    </p>
+    <button class="link-btn" (click)="gotoLogin()">Already have an account? Login</button>
   </div>
 </div>
