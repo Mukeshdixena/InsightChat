@@ -47,23 +47,52 @@ export class SocketService implements OnDestroy {
   // -------------------------
   // SEND MESSAGE
   // -------------------------
-  sendMessage(message: ChatMessage) {
-    if (!this.isConnected) {
-      console.warn('Trying to send message while disconnected');
-    }
-    this.socket.emit('sendMessage', message);
+  // -------------------------
+  // SOCKET EVENTS
+  // -------------------------
+  setup(user: any) {
+    this.socket.emit("setup", user);
+  }
+
+  joinChat(chatId: string) {
+    this.socket.emit("join chat", chatId);
+  }
+
+  sendTyping(chatId: string) {
+    this.socket.emit("typing", chatId);
+  }
+
+  stopTyping(chatId: string) {
+    this.socket.emit("stop typing", chatId);
+  }
+
+  // -------------------------
+  // SEND MESSAGE
+  // -------------------------
+  sendMessage(message: any) {
+    this.socket.emit("new message", message);
   }
 
   // -------------------------
   // RECEIVE MESSAGES
   // -------------------------
-  receiveMessages(): Observable<ChatMessage> {
+  messageReceived(): Observable<any> {
     return new Observable(observer => {
-      const handler = (data: ChatMessage) => observer.next(data);
+      this.socket.on("message received", (newMessageRecieved) => {
+        observer.next(newMessageRecieved);
+      });
+    });
+  }
 
-      this.socket.on('receiveMessage', handler);
+  typing(): Observable<any> {
+    return new Observable(observer => {
+      this.socket.on("typing", () => observer.next(null));
+    });
+  }
 
-      return () => this.socket.off('receiveMessage', handler);
+  stopTypingListener(): Observable<any> {
+    return new Observable(observer => {
+      this.socket.on("stop typing", () => observer.next(null));
     });
   }
 

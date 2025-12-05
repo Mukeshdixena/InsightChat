@@ -21,7 +21,7 @@ chat-server/package-lock.json
 out-tsc/
 
 # Ignore compiled JS files (from TypeScript)
-*.js
+
 *.js.map
 
 # Ignore temporary files

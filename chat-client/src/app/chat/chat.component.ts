@@ -37,7 +37,7 @@ export class ChatComponent implements OnInit {
       console.error("Failed to load messages");
     }
 
-    this.socket.receiveMessages().subscribe(msg => {
+    this.socket.messageReceived().subscribe((msg: any) => {
       this.messages.push(msg);
       setTimeout(() => this.scrollToBottom(), 50);
     });

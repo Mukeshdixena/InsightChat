@@ -1,0 +1,37 @@
+<div class="create-group-container">
+    <h3>Create New Group</h3>
+
+    <div class="form-group">
+        <input [(ngModel)]="groupName" placeholder="Group Name" class="group-name-input" />
+    </div>
+
+    <div class="form-group">
+        <input [(ngModel)]="searchQuery" (keyup)="searchUsers()" placeholder="Add Users eg: John, Jane"
+            class="user-search-input" />
+    </div>
+
+    <!-- Selected Users Pills -->
+    <div class="selected-users">
+        <span *ngFor="let user of selectedUsers" class="user-pill">
+            {{ user.username }}
+            <span (click)="removeUser(user)" class="remove-icon">×</span>
+        </span>
+    </div>
+
+    <!-- Search Results -->
+    <div class="search-results" *ngIf="searchResults.length > 0">
+        <div *ngFor="let user of searchResults" (click)="addUser(user)" class="user-item">
+            <div class="avatar">{{ user.username.charAt(0) }}</div>
+            <div class="user-info">
+                <span class="username">{{ user.username }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button (click)="createGroup()" class="btn-primary" [disabled]="!groupName || selectedUsers.length < 2">
+            Create Group
+        </button>
+        <button (click)="cancel()" class="btn-secondary">Cancel</button>
+    </div>
+</div>

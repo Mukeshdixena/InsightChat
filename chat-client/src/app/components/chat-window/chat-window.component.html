@@ -1,0 +1,29 @@
+<div class="chat-window-container" *ngIf="chat; else noChat">
+    <div class="header">
+        <div class="avatar">{{ getChatName().charAt(0) }}</div>
+        <div class="chat-details">
+            <div class="chat-name">{{ getChatName() }}</div>
+        </div>
+    </div>
+
+    <div class="messages-container" #scrollContainer>
+        <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
+            <div class="message-content">
+                {{ msg.content }}
+                <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <input [(ngModel)]="newMessage" (keydown.enter)="sendMessage()" placeholder="Type a message" type="text" />
+        <button (click)="sendMessage()">Send</button>
+    </div>
+</div>
+
+<ng-template #noChat>
+    <div class="no-chat-selected">
+        <h3>Welcome to InsightChat</h3>
+        <p>Select a chat to start messaging</p>
+    </div>
+</ng-template>
