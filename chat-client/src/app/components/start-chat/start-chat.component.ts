@@ -50,8 +50,11 @@ export class StartChatComponent implements OnInit {
             filtered = filtered.filter(u => u.username.toLowerCase().includes(query));
         }
 
-        // Exclude self
-        this.filteredUsers = filtered.filter(u => this.currentUser ? u._id !== this.currentUser._id : true);
+        // Exclude self and AI Bot
+        this.filteredUsers = filtered.filter(u =>
+            (this.currentUser ? u._id !== this.currentUser._id : true) &&
+            u.username !== 'AI Bot'
+        );
     }
 
     startChat(user: any) {

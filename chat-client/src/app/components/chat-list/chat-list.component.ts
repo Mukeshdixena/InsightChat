@@ -40,7 +40,13 @@ export class ChatListComponent implements OnInit {
 
         this.http.get(`http://localhost:3000/chat/${this.currentUser._id}`).subscribe({
             next: (data: any) => {
-                this.chats = data;
+                // Filter out AI Bot chats
+                this.chats = data.filter((c: any) => {
+                    if (c.isGroupChat) return true;
+                    // Check if other user is AI Bot (assuming 'AI Bot' username or similar)
+                    const otherUser = c.users.find((u: any) => u._id !== this.currentUser._id);
+                    return otherUser && otherUser.username !== 'AI Bot';
+                });
             },
             error: (err) => console.error("Failed to fetch chats", err)
         });

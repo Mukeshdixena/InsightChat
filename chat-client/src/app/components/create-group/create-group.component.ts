@@ -62,7 +62,9 @@ export class CreateGroupComponent implements OnInit {
 
         // Filter out already selected users and self
         this.searchResults = filtered.filter(u =>
-            !this.selectedUsers.find(s => s._id === u._id) && (this.currentUser ? u._id !== this.currentUser._id : true)
+            !this.selectedUsers.find(s => s._id === u._id) &&
+            (this.currentUser ? u._id !== this.currentUser._id : true) &&
+            u.username !== 'AI Bot'
         );
     }
 
