@@ -145,5 +145,25 @@ export class AiWidgetComponent implements OnInit, AfterViewChecked {
     const senderId = typeof msg.sender === 'string' ? msg.sender : msg.sender?._id;
     return senderId === start;
   }
+
+  showMenu = false;
+
+  toggleMenu(event?: Event) {
+    if (event) event.stopPropagation();
+    this.showMenu = !this.showMenu;
+  }
+
+  clearChat() {
+    this.showMenu = false;
+    if (!this.chatId) return;
+    if (!confirm("Are you sure you want to clear your AI chat history?")) return;
+
+    this.http.delete(`http://localhost:3000/messages/${this.chatId}`).subscribe({
+      next: () => {
+        this.messages = [];
+      },
+      error: (err) => console.error("Failed to clear chat", err)
+    });
+  }
 }
 

@@ -94,4 +94,14 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Clear all messages in a chat
+router.delete("/:chatId", async (req, res) => {
+  try {
+    await Message.deleteMany({ chat: req.params.chatId });
+    res.json({ message: "Chat cleared successfully" });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -14,6 +14,17 @@
                 <span class="status">Online • Powered by Gemini</span>
             </div>
         </div>
+        <div class="header-actions">
+            <!-- 3 Dot Menu Trigger -->
+            <span class="menu-trigger" (click)="toggleMenu($event)">⋮</span>
+
+            <!-- Dropdown Menu -->
+            <div class="header-menu-dropdown" *ngIf="showMenu">
+                <div class="menu-item" (click)="clearChat()">
+                    <span>Clear Chat</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="popup-body" #scrollContainer>
