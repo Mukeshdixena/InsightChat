@@ -48,8 +48,53 @@ const generateResponse = async (prompt, senderName) => {
     }
 };
 
+const rewriteText = async (text, style) => {
+    if (!model) return null;
+    try {
+        let prompt = "";
+        switch (style) {
+            case 'grammar':
+                prompt = `Fix the grammar and spelling of the following text, keeping the tone neutral: "${text}"`;
+                break;
+            case 'casual':
+                prompt = `Rewrite the following text to be more casual and friendly: "${text}"`;
+                break;
+            case 'formal':
+                prompt = `Rewrite the following text to be more formal and professional: "${text}"`;
+                break;
+            default:
+                prompt = `Rewrite the following text: "${text}"`;
+        }
+
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+    } catch (error) {
+        console.error("Error rewriting text:", error);
+        return null;
+    }
+};
+
+const generateRewriteSuggestions = async (text) => {
+    if (!model) return null;
+    try {
+        const prompt = `Rewrite the following text in 3 styles: Grammar (fix grammar/spelling), Casual (friendly), and Formal (professional).
+        Return the result correctly formatted as a JSON object with keys: "grammar", "casual", "formal".
+        Do not include markdown code block syntax (like \`\`\`json). Just the raw JSON string.
+        Text: "${text}"`;
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(responseText);
+    } catch (error) {
+        console.error("Error generating rewrite suggestions:", error);
+        return null;
+    }
+};
+
 module.exports = {
     initializeGemini,
     getAiBotId,
-    generateResponse
+    generateResponse,
+    rewriteText,
+    generateRewriteSuggestions
 };

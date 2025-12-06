@@ -20,6 +20,38 @@
         <span style="font-size: 12px; color: gray; margin-left: 10px; font-style: italic;">Typing...</span>
     </div>
 
+    <div class="rewrite-tools" *ngIf="newMessage.trim().length > 0 || showRewritePopup">
+        <!-- Main Rewrite Button -->
+        <button class="rewrite-trigger-btn" (click)="requestRewrite()" [disabled]="isRewriting"
+            *ngIf="!showRewritePopup">
+            <span *ngIf="!isRewriting">✨ Rewrite with AI</span>
+            <span *ngIf="isRewriting">Thinking...</span>
+        </button>
+
+        <!-- Suggestions Popup -->
+        <div class="rewrite-popup" *ngIf="showRewritePopup && rewriteSuggestions">
+            <div class="popup-header">
+                <span>Choose a style:</span>
+                <span class="close-btn" (click)="cancelRewrite()">×</span>
+            </div>
+
+            <div class="suggestion-item" (click)="applyRewrite(rewriteSuggestions.grammar)">
+                <span class="style-label">Grammar:</span>
+                <span class="suggestion-text">{{ rewriteSuggestions.grammar }}</span>
+            </div>
+
+            <div class="suggestion-item" (click)="applyRewrite(rewriteSuggestions.casual)">
+                <span class="style-label">Casual:</span>
+                <span class="suggestion-text">{{ rewriteSuggestions.casual }}</span>
+            </div>
+
+            <div class="suggestion-item" (click)="applyRewrite(rewriteSuggestions.formal)">
+                <span class="style-label">Formal:</span>
+                <span class="suggestion-text">{{ rewriteSuggestions.formal }}</span>
+            </div>
+        </div>
+    </div>
+
     <div class="footer">
         <input [(ngModel)]="newMessage" (keydown.enter)="sendMessage()" (input)="typingHandler()"
             placeholder="Type a message" type="text" />

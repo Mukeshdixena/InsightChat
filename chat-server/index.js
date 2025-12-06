@@ -43,6 +43,7 @@ const io = new Server(server, {
 app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
 app.use("/chat", chatRoutes);
+app.use("/ai", require("./routes/ai"));
 
 io.on("connection", (socket) => {
   console.log("Connected to socket.io");
@@ -63,6 +64,18 @@ io.on("connection", (socket) => {
 
   socket.on("typing", (room) => socket.in(room).emit("typing"));
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+
+  // AI Rewrite Handler
+  socket.on("request rewrite", async (text) => {
+    try {
+      const suggestions = await aiService.generateRewriteSuggestions(text);
+      if (suggestions) {
+        socket.emit("rewrite suggestions", { original: text, suggestions });
+      }
+    } catch (error) {
+      console.error("Error generating rewrite suggestions:", error);
+    }
+  });
 
   socket.on("new message", async (newMessageRecieved) => {
     var chat = newMessageRecieved.chat;

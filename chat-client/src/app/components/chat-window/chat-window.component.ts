@@ -47,6 +47,14 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.socketService.stopTypingListener().subscribe(() => {
             this.isTyping = false;
         });
+
+        this.socketService.onRewriteSuggestions().subscribe((data: any) => {
+            // Check if suggestions match current input (simple validation)
+            // Or just always show them
+            this.rewriteSuggestions = data.suggestions;
+            this.showRewritePopup = true;
+            this.isRewriting = false;
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -61,7 +69,14 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.scrollToBottom();
     }
 
+    rewriteDebounceTimer: any;
+
     typingHandler() {
+        // Hide popup immediately when typing resumes
+        if (this.showRewritePopup) {
+            this.showRewritePopup = false;
+        }
+
         if (!this.typing) {
             this.typing = true;
             this.socketService.sendTyping(this.chat._id);
@@ -69,6 +84,14 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
 
         let lastTypingTime = new Date().getTime();
         var timerLength = 3000;
+
+        // Clear existing typing stop timer
+        // (Note: The original code recreated the timer locally every time which was buggy/redundant logic 
+        // effectively only checking time diff in a closure. 
+        // I will keep the existing typing indicator logic structure but add my own separate debounce for rewrite
+        // to minimize regression risk on the 'typing...' indicator itself, or I could merge them.)
+
+        // Existing typing indicator logic (kept as is mostly, just re-wrapped/verified)
         setTimeout(() => {
             var timeNow = new Date().getTime();
             var timeDiff = timeNow - lastTypingTime;
@@ -77,6 +100,17 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
                 this.typing = false;
             }
         }, timerLength);
+
+        // Auto-Trigger Rewrite Logic
+        if (this.rewriteDebounceTimer) {
+            clearTimeout(this.rewriteDebounceTimer);
+        }
+
+        this.rewriteDebounceTimer = setTimeout(() => {
+            if (this.newMessage.trim().length > 3) {
+                this.requestRewrite();
+            }
+        }, 2000); // 2 seconds pause trigger
     }
 
     fetchMessages() {
@@ -103,13 +137,38 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
 
         this.http.post('http://localhost:3000/messages', messageData).subscribe({
             next: (data: any) => {
-                this.socketService.sendMessage(data);
-                this.messages.push(data);
+                if (Array.isArray(data)) {
+                    this.messages = data;
+                } else {
+                    this.socketService.sendMessage(data);
+                    this.messages.push(data);
+                }
                 this.newMessage = "";
                 this.scrollToBottom();
             },
             error: (err) => console.error("Failed to send message", err)
         });
+    }
+
+    rewriteSuggestions: any = null;
+    showRewritePopup: boolean = false;
+    isRewriting: boolean = false;
+
+    requestRewrite() {
+        if (!this.newMessage.trim() || this.newMessage.trim().length <= 3) return;
+        this.isRewriting = true;
+        this.socketService.requestRewrite(this.newMessage);
+    }
+
+    applyRewrite(text: string) {
+        this.newMessage = text;
+        this.rewriteSuggestions = null;
+        this.showRewritePopup = false;
+    }
+
+    cancelRewrite() {
+        this.rewriteSuggestions = null;
+        this.showRewritePopup = false;
     }
 
     getChatName(): string {

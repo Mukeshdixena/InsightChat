@@ -97,6 +97,19 @@ export class SocketService implements OnDestroy {
   }
 
   // -------------------------
+  // AI EVENTS
+  // -------------------------
+  requestRewrite(text: string) {
+    this.socket.emit("request rewrite", text);
+  }
+
+  onRewriteSuggestions(): Observable<any> {
+    return new Observable(observer => {
+      this.socket.on("rewrite suggestions", (data) => observer.next(data));
+    });
+  }
+
+  // -------------------------
   // CLEANUP
   // -------------------------
   ngOnDestroy() {
