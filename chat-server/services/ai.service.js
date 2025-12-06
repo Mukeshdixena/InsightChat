@@ -9,7 +9,7 @@ const initializeGemini = async () => {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (GEMINI_API_KEY) {
         genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-        model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         console.log("Gemini AI Initialized");
     } else {
         console.warn("GEMINI_API_KEY is missing. AI Bot will not function.");
