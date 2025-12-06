@@ -74,43 +74,7 @@ io.on("connection", (socket) => {
       socket.in(user._id).emit("message received", newMessageRecieved);
     });
 
-    // Handle AI Bot Response
-    const aiBotId = aiService.getAiBotId();
-    if (aiBotId) {
-      const isBotInChat = chat.users.some(u => u._id.toString() === aiBotId);
-      const isSenderBot = newMessageRecieved.sender._id === aiBotId;
-
-      if (isBotInChat && !isSenderBot) {
-        // Trigger AI response
-        try {
-          const prompt = newMessageRecieved.content;
-          const senderName = newMessageRecieved.sender.username || "User";
-
-          const responseText = await aiService.generateResponse(prompt, senderName);
-
-          if (responseText) {
-            // Create Message in DB
-            const botMessage = await Message.create({
-              sender: aiBotId,
-              content: responseText,
-              chat: chat._id
-            });
-
-            // Populate sender for frontend
-            const fullBotMessage = await Message.findById(botMessage._id)
-              .populate("sender", "username")
-              .populate("chat");
-
-            // Emit to chat users
-            chat.users.forEach((user) => {
-              socket.in(user._id).emit("message received", fullBotMessage);
-            });
-          }
-        } catch (error) {
-          console.error("Error handling AI response:", error);
-        }
-      }
-    }
+    // Handle AI Bot Response - REMOVED (Moved to REST API)
   });
 
   socket.off("setup", () => {

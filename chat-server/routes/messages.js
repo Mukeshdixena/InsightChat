@@ -43,7 +43,52 @@ router.post("/", async (req, res) => {
 
     await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message });
 
-    res.json(message);
+    // --- AI BOT LOGIC START ---
+    const aiService = require("../services/ai.service");
+    const aiBotId = aiService.getAiBotId();
+    let aiResponseGenerated = false;
+
+    if (aiBotId) {
+      // Check participation
+      const isAiChat = message.chat.users.some(u => u._id.toString() === aiBotId);
+      const isSenderBot = userId === aiBotId;
+
+      if (isAiChat && !isSenderBot) {
+        // Generate AI Response synchronously
+        try {
+          const prompt = content;
+          const senderName = message.sender.username || "User";
+
+          const responseText = await aiService.generateResponse(prompt, senderName);
+
+          if (responseText) {
+            const botMessage = await Message.create({
+              sender: aiBotId,
+              content: responseText,
+              chat: chatId
+            });
+
+            await Chat.findByIdAndUpdate(chatId, { latestMessage: botMessage });
+            aiResponseGenerated = true;
+          }
+        } catch (aiError) {
+          console.error("AI Generation failed:", aiError);
+          // We continue without AI response, just treating it as a normal message
+        }
+      }
+    }
+    // --- AI BOT LOGIC END ---
+
+    if (aiResponseGenerated) {
+      // Return full history so frontend shows both messages instantly
+      const fullMessages = await Message.find({ chat: chatId })
+        .populate("sender", "username")
+        .populate("chat");
+      res.json(fullMessages);
+    } else {
+      res.json(message);
+    }
+
   } catch (error) {
     res.status(400).json(error.message);
   }

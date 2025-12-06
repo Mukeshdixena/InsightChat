@@ -124,9 +124,17 @@ export class AiWidgetComponent implements OnInit, AfterViewChecked {
     const headers = { 'Authorization': `Bearer ${token}` };
 
     this.http.post('http://localhost:3000/messages', messagePayload, { headers }).subscribe({
-      next: (msg: any) => {
-        this.messages.push(msg);
-        this.socketService.sendMessage(msg);
+      next: (response: any) => {
+        if (Array.isArray(response)) {
+          // If response is an array, it's the full chat history (User + Bot)
+          this.messages = response;
+        } else {
+          // Fallback for standard message
+          this.messages.push(response);
+          // AI Chat is private, socket emission might be redundant if we just fetched full history,
+          // but good for consistency or other devices.
+          this.socketService.sendMessage(response);
+        }
       },
       error: (err: any) => console.error("Failed to send message", err)
     });
