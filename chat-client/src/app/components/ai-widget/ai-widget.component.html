@@ -1,0 +1,40 @@
+<!-- Floating Button -->
+<div class="ai-fab" (click)="toggleWidget()" [class.open]="isOpen">
+    <span class="fab-icon" *ngIf="!isOpen">🤖</span>
+    <span class="fab-icon close" *ngIf="isOpen">✕</span>
+</div>
+
+<!-- Chat Popup -->
+<div class="ai-popup" *ngIf="isOpen">
+    <div class="popup-header">
+        <div class="header-info">
+            <span class="bot-avatar">🤖</span>
+            <div class="bot-details">
+                <h4>AI Assistant</h4>
+                <span class="status">Online • Powered by Gemini</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup-body" #scrollContainer>
+        <div *ngIf="loading" class="loading-state">Connecting...</div>
+
+        <div *ngIf="!loading && messages.length === 0" class="welcome-state">
+            <p>👋 Hi! I'm your AI assistant.</p>
+            <p>Ask me anything!</p>
+        </div>
+
+        <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
+            <div class="message-content">
+                {{ msg.content }}
+            </div>
+        </div>
+    </div>
+
+    <div class="popup-footer">
+        <input [(ngModel)]="newMessage" (keydown.enter)="sendMessage()" placeholder="Ask a question..." autoFocus />
+        <button (click)="sendMessage()" [disabled]="!newMessage.trim()">
+            ➤
+        </button>
+    </div>
+</div>
