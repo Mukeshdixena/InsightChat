@@ -74,6 +74,29 @@ export class SocketService implements OnDestroy {
   }
 
   // -------------------------
+  // MESSAGE STATUS EVENTS
+  // -------------------------
+  emitMessageDelivered(messageId: string, userId: string) {
+    this.socket.emit("message delivered", { messageId, userId });
+  }
+
+  emitMessageRead(messageId: string, userId: string) {
+    this.socket.emit("message read", { messageId, userId });
+  }
+
+  emitMessagesRead(messageIds: string[], userId: string) {
+    this.socket.emit("messages read", { messageIds, userId });
+  }
+
+  onMessageStatusUpdate(): Observable<any> {
+    return new Observable(observer => {
+      this.socket.on("message status updated", (data) => {
+        observer.next(data);
+      });
+    });
+  }
+
+  // -------------------------
   // RECEIVE MESSAGES
   // -------------------------
   messageReceived(): Observable<any> {

@@ -103,6 +103,62 @@ body.dark-theme .message.sent .message-content {
     opacity: 0.8;
 }
 
+/* Message Status Indicators */
+.message-status {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.status-tick {
+    color: #999;
+    font-weight: normal;
+}
+
+.status-tick.read {
+    color: #53bdeb;
+    /* WhatsApp blue color */
+}
+
+/* Typing Indicator */
+.typing-indicator {
+    padding: 8px 20px;
+    background-color: var(--header-bg);
+    border-top: 1px solid var(--border-color);
+}
+
+.typing-text {
+    font-size: 13px;
+    color: #667781;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+}
+
+.typing-text::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #25d366;
+    margin-right: 8px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
 /* Footer (Input Area) */
 .footer {
     padding: 16px 100px 16px 20px;

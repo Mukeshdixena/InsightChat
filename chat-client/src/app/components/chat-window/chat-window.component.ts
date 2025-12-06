@@ -20,6 +20,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
 
     typing: boolean = false;
     isTyping: boolean = false;
+    typingUserName: string = '';
 
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
@@ -37,15 +38,30 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             if (this.chat && message.chat._id === this.chat._id) {
                 this.messages.push(message);
                 this.scrollToBottom();
+
+                // Mark message as delivered immediately
+                this.socketService.emitMessageDelivered(message._id, this.currentUser._id);
+
+                // Mark as read after a short delay (simulating user viewing the message)
+                // This happens when chat is already open and active
+                setTimeout(() => {
+                    this.markMessagesAsRead([message._id]);
+                }, 500);
             }
         });
 
         this.socketService.typing().subscribe(() => {
             this.isTyping = true;
+            // Get typing user name from chat users
+            if (this.chat && !this.chat.isGroupChat) {
+                const otherUser = this.chat.users.find((u: any) => u._id !== this.currentUser._id);
+                this.typingUserName = otherUser ? otherUser.username : '';
+            }
         });
 
         this.socketService.stopTypingListener().subscribe(() => {
             this.isTyping = false;
+            this.typingUserName = '';
         });
 
         this.socketService.onRewriteSuggestions().subscribe((data: any) => {
@@ -55,6 +71,16 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             this.showRewritePopup = true;
             this.isRewriting = false;
         });
+
+        // Listen for message status updates
+        this.socketService.onMessageStatusUpdate().subscribe((data: any) => {
+            const message = this.messages.find(m => m._id === data.messageId);
+            if (message) {
+                message.status = data.status;
+                if (data.readBy) message.readBy = data.readBy;
+                if (data.deliveredTo) message.deliveredTo = data.deliveredTo;
+            }
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -62,6 +88,10 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             this.fetchMessages();
             this.socketService.joinChat(this.chat._id);
             this.isTyping = false;
+            this.typingUserName = '';
+
+            // Mark all unread messages as delivered and read when opening chat
+            setTimeout(() => this.markAllMessagesAsRead(), 500);
         }
     }
 
@@ -118,8 +148,42 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             next: (data: any) => {
                 this.messages = data;
                 this.scrollToBottom();
+
+                // Mark messages as delivered and read after fetching
+                setTimeout(() => this.markAllMessagesAsRead(), 500);
             },
             error: (err) => console.error("Failed to fetch messages", err)
+        });
+    }
+
+    markAllMessagesAsRead() {
+        if (!this.messages || this.messages.length === 0) return;
+
+        // Get all message IDs that are not sent by current user and not already read
+        const unreadMessageIds = this.messages
+            .filter(msg => !this.isMyMessage(msg) && (!msg.readBy || !msg.readBy.includes(this.currentUser._id)))
+            .map(msg => msg._id);
+
+        if (unreadMessageIds.length > 0) {
+            this.markMessagesAsRead(unreadMessageIds);
+        }
+    }
+
+    markMessagesAsRead(messageIds: string[]) {
+        if (!messageIds || messageIds.length === 0) return;
+
+        // Emit read status for all messages
+        this.socketService.emitMessagesRead(messageIds, this.currentUser._id);
+
+        // Update local status immediately for better UX
+        messageIds.forEach(id => {
+            const msg = this.messages.find(m => m._id === id);
+            if (msg) {
+                if (!msg.readBy) msg.readBy = [];
+                if (!msg.readBy.includes(this.currentUser._id)) {
+                    msg.readBy.push(this.currentUser._id);
+                }
+            }
         });
     }
 
@@ -182,6 +246,13 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
 
     isMyMessage(msg: any): boolean {
         return msg.sender._id === this.currentUser._id || msg.sender === this.currentUser._id;
+    }
+
+    getMessageStatus(msg: any): string {
+        if (!this.isMyMessage(msg)) return '';
+
+        // Return status: 'sent', 'delivered', or 'read'
+        return msg.status || 'sent';
     }
 
     scrollToBottom(): void {

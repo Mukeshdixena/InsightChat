@@ -6,18 +6,31 @@
         </div>
     </div>
 
+    <!-- Messages Area with Status Indicators -->
     <div class="messages-container" #scrollContainer>
         <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
             <div class="message-content">
                 {{ msg.content }}
                 <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
+
+                <!-- Message Status Indicators (only for sent messages) -->
+                <span class="message-status" *ngIf="isMyMessage(msg)">
+                    <!-- Single Tick - Sent -->
+                    <span *ngIf="getMessageStatus(msg) === 'sent'" class="status-tick">✓</span>
+
+                    <!-- Double Tick - Delivered -->
+                    <span *ngIf="getMessageStatus(msg) === 'delivered'" class="status-tick">✓✓</span>
+
+                    <!-- Blue Double Tick - Read -->
+                    <span *ngIf="getMessageStatus(msg) === 'read'" class="status-tick read">✓✓</span>
+                </span>
             </div>
         </div>
     </div>
 
     <!-- Typing Indicator -->
     <div class="typing-indicator" *ngIf="isTyping">
-        <span style="font-size: 12px; color: gray; margin-left: 10px; font-style: italic;">Typing...</span>
+        <span class="typing-text">{{ typingUserName || 'Someone' }} is typing...</span>
     </div>
 
     <div class="rewrite-tools" *ngIf="newMessage.trim().length > 0 || showRewritePopup">

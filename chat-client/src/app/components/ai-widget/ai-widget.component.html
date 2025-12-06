@@ -38,6 +38,13 @@
         <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
             <div class="message-content">
                 {{ msg.content }}
+
+                <!-- Message Status Indicators (only for sent messages) -->
+                <span class="message-status" *ngIf="isMyMessage(msg)">
+                    <span *ngIf="getMessageStatus(msg) === 'sent'" class="status-tick">✓</span>
+                    <span *ngIf="getMessageStatus(msg) === 'delivered'" class="status-tick">✓✓</span>
+                    <span *ngIf="getMessageStatus(msg) === 'read'" class="status-tick read">✓✓</span>
+                </span>
             </div>
         </div>
     </div>

@@ -40,6 +40,23 @@ export class AiWidgetComponent implements OnInit, AfterViewChecked {
         this.messages.push(message);
         this.socketService.stopTyping(this.chatId);
         this.isTyping = false;
+
+        // Mark AI message as delivered and read
+        const currentUser = this.authService.getCurrentUser();
+        if (currentUser) {
+          this.socketService.emitMessageDelivered(message._id, currentUser._id);
+          this.socketService.emitMessageRead(message._id, currentUser._id);
+        }
+      }
+    });
+
+    // Listen for message status updates
+    this.socketService.onMessageStatusUpdate().subscribe((data: any) => {
+      const message = this.messages.find(m => m._id === data.messageId);
+      if (message) {
+        message.status = data.status;
+        if (data.readBy) message.readBy = data.readBy;
+        if (data.deliveredTo) message.deliveredTo = data.deliveredTo;
       }
     });
   }
@@ -146,6 +163,11 @@ export class AiWidgetComponent implements OnInit, AfterViewChecked {
     const start = this.authService.getCurrentUser()?._id;
     const senderId = typeof msg.sender === 'string' ? msg.sender : msg.sender?._id;
     return senderId === start;
+  }
+
+  getMessageStatus(msg: any): string {
+    if (!this.isMyMessage(msg)) return '';
+    return msg.status || 'sent';
   }
 
   showMenu = false;

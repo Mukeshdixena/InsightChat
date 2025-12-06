@@ -29,6 +29,9 @@ router.post("/", async (req, res) => {
     sender: userId,
     content: content,
     chat: chatId,
+    status: 'sent',
+    deliveredTo: [],
+    readBy: []
   };
 
   try {
@@ -65,7 +68,10 @@ router.post("/", async (req, res) => {
             const botMessage = await Message.create({
               sender: aiBotId,
               content: responseText,
-              chat: chatId
+              chat: chatId,
+              status: 'sent',
+              deliveredTo: [],
+              readBy: []
             });
 
             await Chat.findByIdAndUpdate(chatId, { latestMessage: botMessage });

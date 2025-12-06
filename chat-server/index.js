@@ -90,6 +90,83 @@ io.on("connection", (socket) => {
     // Handle AI Bot Response - REMOVED (Moved to REST API)
   });
 
+  // Message Delivered Event
+  socket.on("message delivered", async ({ messageId, userId }) => {
+    try {
+      const message = await Message.findById(messageId);
+      if (!message) return;
+
+      // Add user to deliveredTo array if not already there
+      if (!message.deliveredTo.includes(userId)) {
+        message.deliveredTo.push(userId);
+
+        // Update status to delivered if not already read
+        if (message.status === 'sent') {
+          message.status = 'delivered';
+        }
+
+        await message.save();
+
+        // Notify sender about delivery
+        socket.in(message.sender.toString()).emit("message status updated", {
+          messageId: message._id,
+          status: message.status,
+          deliveredTo: message.deliveredTo
+        });
+      }
+    } catch (error) {
+      console.error("Error updating message delivery status:", error);
+    }
+  });
+
+  // Message Read Event (single message)
+  socket.on("message read", async ({ messageId, userId }) => {
+    try {
+      const message = await Message.findById(messageId);
+      if (!message) return;
+
+      // Add user to readBy array if not already there
+      if (!message.readBy.includes(userId)) {
+        message.readBy.push(userId);
+        message.status = 'read';
+        await message.save();
+
+        // Notify sender about read status
+        socket.in(message.sender.toString()).emit("message status updated", {
+          messageId: message._id,
+          status: message.status,
+          readBy: message.readBy
+        });
+      }
+    } catch (error) {
+      console.error("Error updating message read status:", error);
+    }
+  });
+
+  // Batch Mark Messages as Read
+  socket.on("messages read", async ({ messageIds, userId }) => {
+    try {
+      const messages = await Message.find({ _id: { $in: messageIds } });
+
+      for (const message of messages) {
+        if (!message.readBy.includes(userId)) {
+          message.readBy.push(userId);
+          message.status = 'read';
+          await message.save();
+
+          // Notify sender
+          socket.in(message.sender.toString()).emit("message status updated", {
+            messageId: message._id,
+            status: message.status,
+            readBy: message.readBy
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error batch updating read status:", error);
+    }
+  });
+
   socket.off("setup", () => {
     console.log("USER DISCONNECTED");
   });

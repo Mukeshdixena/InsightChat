@@ -199,6 +199,23 @@
     background: #d9fdd3;
 }
 
+/* Message Status Indicators */
+.message-status {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 11px;
+    vertical-align: middle;
+}
+
+.status-tick {
+    color: #999;
+    font-weight: normal;
+}
+
+.status-tick.read {
+    color: #53bdeb;
+}
+
 /* Footer */
 .popup-footer {
     padding: 12px;
