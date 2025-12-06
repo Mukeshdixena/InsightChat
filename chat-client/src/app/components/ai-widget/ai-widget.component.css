@@ -60,6 +60,9 @@
     padding: 16px;
     background: linear-gradient(to right, rgba(0, 128, 105, 0.9), rgba(0, 168, 132, 0.9));
     color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .header-info {
