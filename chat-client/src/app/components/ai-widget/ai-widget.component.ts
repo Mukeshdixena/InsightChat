@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-ai-widget',
@@ -27,7 +28,8 @@ export class AiWidgetComponent implements OnInit, AfterViewChecked {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit() {
@@ -156,13 +158,16 @@ export class AiWidgetComponent implements OnInit, AfterViewChecked {
   clearChat() {
     this.showMenu = false;
     if (!this.chatId) return;
-    if (!confirm("Are you sure you want to clear your AI chat history?")) return;
 
     this.http.delete(`http://localhost:3000/messages/${this.chatId}`).subscribe({
       next: () => {
         this.messages = [];
+        this.toastService.show('AI chat history cleared', 'success');
       },
-      error: (err) => console.error("Failed to clear chat", err)
+      error: (err) => {
+        console.error("Failed to clear chat", err);
+        this.toastService.show('Failed to clear chat history', 'error');
+      }
     });
   }
 }

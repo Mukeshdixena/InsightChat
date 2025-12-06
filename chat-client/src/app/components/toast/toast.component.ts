@@ -10,9 +10,13 @@ import { ToastService } from '../../services/toast.service';
   styleUrls: ['./toast.component.css']
 })
 export class ToastComponent {
-  toast: any = {};
+  toasts$;
 
-  constructor(private toastService: ToastService) {
-    this.toastService.toast$.subscribe(t => this.toast = t);
+  constructor(public toastService: ToastService) {
+    this.toasts$ = this.toastService.toasts$;
+  }
+
+  remove(id: number) {
+    this.toastService.remove(id);
   }
 }

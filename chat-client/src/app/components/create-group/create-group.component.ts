@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
     selector: 'app-create-group',
@@ -21,7 +22,7 @@ export class CreateGroupComponent implements OnInit {
     selectedUsers: any[] = [];
     currentUser: any;
 
-    constructor(private http: HttpClient, private authService: AuthService) {
+    constructor(private http: HttpClient, private authService: AuthService, private toastService: ToastService) {
         this.currentUser = this.authService.getCurrentUser();
     }
 

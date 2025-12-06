@@ -1,26 +1,36 @@
-import { Injectable } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+export interface Toast {
+  message: string;
+  type: 'success' | 'error' | 'info';
+  id: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
 export class ToastService {
-  toast$ = new BehaviorSubject<{ message: string; type: 'success' | 'error' | '' }>({
-    message: '',
-    type: ''
-  });
+  private toastsSubject = new BehaviorSubject<Toast[]>([]);
+  public toasts$ = this.toastsSubject.asObservable();
+  private counter = 0;
 
-  showSuccess(message: string) {
-    this.toast$.next({ message, type: 'success' });
-    this.hideAfterDelay();
-  }
+  show(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    const id = this.counter++;
+    const newToast: Toast = { message, type, id };
 
-  showError(message: string) {
-    this.toast$.next({ message, type: 'error' });
-    this.hideAfterDelay();
-  }
+    // Add to current list
+    const currentToasts = this.toastsSubject.value;
+    this.toastsSubject.next([...currentToasts, newToast]);
 
-  private hideAfterDelay() {
+    // Auto remove after 3 seconds
     setTimeout(() => {
-      this.toast$.next({ message: '', type: '' });
+      this.remove(id);
     }, 3000);
+  }
+
+  remove(id: number) {
+    const currentToasts = this.toastsSubject.value;
+    this.toastsSubject.next(currentToasts.filter(t => t.id !== id));
   }
 }
