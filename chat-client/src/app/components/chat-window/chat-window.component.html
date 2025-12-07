@@ -6,24 +6,77 @@
         </div>
     </div>
 
-    <!-- Messages Area with Status Indicators -->
+    <!-- Messages Area -->
     <div class="messages-container" #scrollContainer>
         <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
-            <div class="message-content">
+            <!-- Reply Preview -->
+            <div class="reply-preview" *ngIf="msg.replyTo">
+                <strong>{{ msg.replyTo.sender?.username || 'User' }}</strong>
+                <p>{{ msg.replyTo.content }}</p>
+            </div>
+
+            <!-- Message Content -->
+            <div class="message-content" *ngIf="!msg.isDeleted">
                 {{ msg.content }}
                 <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
+                <span class="edited-indicator" *ngIf="msg.isEdited">(edited)</span>
 
-                <!-- Message Status Indicators (only for sent messages) -->
+                <!-- Status Ticks -->
                 <span class="message-status" *ngIf="isMyMessage(msg)">
-                    <!-- Single Tick - Sent -->
                     <span *ngIf="getMessageStatus(msg) === 'sent'" class="status-tick">✓</span>
-
-                    <!-- Double Tick - Delivered -->
                     <span *ngIf="getMessageStatus(msg) === 'delivered'" class="status-tick">✓✓</span>
-
-                    <!-- Blue Double Tick - Read -->
                     <span *ngIf="getMessageStatus(msg) === 'read'" class="status-tick read">✓✓</span>
                 </span>
+            </div>
+
+            <!-- Deleted Message -->
+            <div class="message-content deleted" *ngIf="msg.isDeleted">
+                <em>Message deleted</em>
+            </div>
+
+            <!-- Reactions -->
+            <div class="reactions-display" *ngIf="msg.reactions && msg.reactions.length > 0">
+                <span *ngFor="let reaction of msg.reactions" class="reaction-bubble"
+                    [class.user-reacted]="reaction.users.includes(currentUser._id)"
+                    (click)="addReaction(msg, reaction.emoji)">
+                    {{ reaction.emoji }} {{ reaction.users.length }}
+                </span>
+            </div>
+
+            <!-- Message Actions Menu Trigger -->
+            <div class="message-menu-trigger" *ngIf="!msg.isDeleted" (click)="toggleMessageMenu(msg._id)">
+                <span class="menu-icon">⋮</span>
+            </div>
+
+            <!-- Message Actions Dropdown Menu -->
+            <div class="message-actions-menu" *ngIf="showMessageMenu[msg._id] && !msg.isDeleted">
+                <div class="menu-item" (click)="toggleReactionPicker(msg._id); toggleMessageMenu(msg._id)">
+                    <span class="menu-icon">😊</span>
+                    <span class="menu-label">React</span>
+                </div>
+                <div class="menu-item" (click)="replyToMessage(msg); toggleMessageMenu(msg._id)">
+                    <span class="menu-icon">↩️</span>
+                    <span class="menu-label">Reply</span>
+                </div>
+                <div class="menu-item" (click)="copyMessage(msg); toggleMessageMenu(msg._id)">
+                    <span class="menu-icon">📋</span>
+                    <span class="menu-label">Copy</span>
+                </div>
+                <div class="menu-item" *ngIf="isMyMessage(msg)" (click)="startEdit(msg); toggleMessageMenu(msg._id)">
+                    <span class="menu-icon">✏️</span>
+                    <span class="menu-label">Edit</span>
+                </div>
+                <div class="menu-item delete" *ngIf="isMyMessage(msg)"
+                    (click)="deleteMessage(msg); toggleMessageMenu(msg._id)">
+                    <span class="menu-icon">🗑️</span>
+                    <span class="menu-label">Delete</span>
+                </div>
+            </div>
+
+            <!-- Reaction Picker -->
+            <div class="reaction-picker" *ngIf="showReactionPicker[msg._id]">
+                <span *ngFor="let emoji of availableReactions" class="emoji-option" (click)="addReaction(msg, emoji)">{{
+                    emoji }}</span>
             </div>
         </div>
     </div>
@@ -33,31 +86,27 @@
         <span class="typing-text">{{ typingUserName || 'Someone' }} is typing...</span>
     </div>
 
+    <!-- Rewrite Tools -->
     <div class="rewrite-tools" *ngIf="newMessage.trim().length > 0 || showRewritePopup">
-        <!-- Main Rewrite Button -->
         <button class="rewrite-trigger-btn" (click)="requestRewrite()" [disabled]="isRewriting"
             *ngIf="!showRewritePopup">
             <span *ngIf="!isRewriting">✨ Rewrite with AI</span>
             <span *ngIf="isRewriting">Thinking...</span>
         </button>
 
-        <!-- Suggestions Popup -->
         <div class="rewrite-popup" *ngIf="showRewritePopup && rewriteSuggestions">
             <div class="popup-header">
                 <span>Choose a style:</span>
                 <span class="close-btn" (click)="cancelRewrite()">×</span>
             </div>
-
             <div class="suggestion-item" (click)="applyRewrite(rewriteSuggestions.grammar)">
                 <span class="style-label">Grammar:</span>
                 <span class="suggestion-text">{{ rewriteSuggestions.grammar }}</span>
             </div>
-
             <div class="suggestion-item" (click)="applyRewrite(rewriteSuggestions.casual)">
                 <span class="style-label">Casual:</span>
                 <span class="suggestion-text">{{ rewriteSuggestions.casual }}</span>
             </div>
-
             <div class="suggestion-item" (click)="applyRewrite(rewriteSuggestions.formal)">
                 <span class="style-label">Formal:</span>
                 <span class="suggestion-text">{{ rewriteSuggestions.formal }}</span>
@@ -65,10 +114,26 @@
         </div>
     </div>
 
+    <!-- Footer -->
     <div class="footer">
-        <input [(ngModel)]="newMessage" (keydown.enter)="sendMessage()" (input)="typingHandler()"
-            placeholder="Type a message" type="text" />
-        <button (click)="sendMessage()">Send</button>
+        <!-- Reply Preview in Input -->
+        <div class="reply-preview-input" *ngIf="replyingTo">
+            <div class="reply-info">
+                <span>Replying to <strong>{{ replyingTo.sender?.username || 'User' }}</strong></span>
+                <p>{{ replyingTo.content }}</p>
+            </div>
+            <button class="cancel-btn" (click)="cancelReply()">✕</button>
+        </div>
+
+        <!-- Edit Mode Indicator -->
+        <div class="edit-mode-indicator" *ngIf="editingMessage">
+            <span>Editing message</span>
+            <button class="cancel-btn" (click)="cancelEdit()">✕</button>
+        </div>
+
+        <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" (input)="typingHandler()"
+            placeholder="Type a message..." />
+        <button (click)="sendMessage()">{{ editingMessage ? 'Save' : 'Send' }}</button>
     </div>
 </div>
 

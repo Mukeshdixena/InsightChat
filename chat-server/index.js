@@ -167,6 +167,24 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Reaction Events
+  socket.on("reaction added", async ({ messageId, emoji, userId, chatId }) => {
+    // Broadcast to all users in the chat
+    socket.in(chatId).emit("reaction updated", { messageId, emoji, userId });
+  });
+
+  // Message Edit Event
+  socket.on("message edited", async ({ messageId, content, chatId }) => {
+    // Broadcast to all users in the chat
+    socket.in(chatId).emit("message updated", { messageId, content, isEdited: true });
+  });
+
+  // Message Delete Event
+  socket.on("message deleted", async ({ messageId, chatId }) => {
+    // Broadcast to all users in the chat
+    socket.in(chatId).emit("message removed", { messageId });
+  });
+
   socket.off("setup", () => {
     console.log("USER DISCONNECTED");
   });

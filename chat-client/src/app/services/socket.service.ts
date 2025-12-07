@@ -133,6 +133,42 @@ export class SocketService implements OnDestroy {
   }
 
   // -------------------------
+  // REACTION EVENTS
+  // -------------------------
+  emitReaction(messageId: string, emoji: string, userId: string, chatId: string) {
+    this.socket.emit("reaction added", { messageId, emoji, userId, chatId });
+  }
+
+  onReactionUpdate(): Observable<any> {
+    return new Observable(observer => {
+      this.socket.on("reaction updated", (data) => observer.next(data));
+    });
+  }
+
+  // -------------------------
+  // MESSAGE EDIT/DELETE EVENTS
+  // -------------------------
+  emitMessageEdit(messageId: string, content: string, chatId: string) {
+    this.socket.emit("message edited", { messageId, content, chatId });
+  }
+
+  emitMessageDelete(messageId: string, chatId: string) {
+    this.socket.emit("message deleted", { messageId, chatId });
+  }
+
+  onMessageUpdate(): Observable<any> {
+    return new Observable(observer => {
+      this.socket.on("message updated", (data) => observer.next(data));
+    });
+  }
+
+  onMessageRemove(): Observable<any> {
+    return new Observable(observer => {
+      this.socket.on("message removed", (data) => observer.next(data));
+    });
+  }
+
+  // -------------------------
   // CLEANUP
   // -------------------------
   ngOnDestroy() {

@@ -9,7 +9,11 @@ router.get("/:chatId", async (req, res) => {
   try {
     const messages = await Message.find({ chat: req.params.chatId })
       .populate("sender", "username")
-      .populate("chat");
+      .populate("chat")
+      .populate({
+        path: "replyTo",
+        populate: { path: "sender", select: "username" }
+      });
     res.json(messages);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -100,8 +104,91 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Add/Remove Reaction
+router.post("/:messageId/reaction", async (req, res) => {
+  try {
+    const { emoji, userId } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) return res.status(404).json({ error: "Message not found" });
+
+    // Find existing reaction with this emoji
+    let reaction = message.reactions.find(r => r.emoji === emoji);
+
+    if (reaction) {
+      // Toggle: remove user if already reacted, add if not
+      const userIndex = reaction.users.indexOf(userId);
+      if (userIndex > -1) {
+        reaction.users.splice(userIndex, 1);
+        // Remove reaction if no users left
+        if (reaction.users.length === 0) {
+          message.reactions = message.reactions.filter(r => r.emoji !== emoji);
+        }
+      } else {
+        reaction.users.push(userId);
+      }
+    } else {
+      // Create new reaction
+      message.reactions.push({ emoji, users: [userId] });
+    }
+
+    await message.save();
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Edit Message
+router.put("/:messageId", async (req, res) => {
+  try {
+    const { content, userId } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) return res.status(404).json({ error: "Message not found" });
+
+    // Only sender can edit
+    if (message.sender.toString() !== userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    message.content = content;
+    message.isEdited = true;
+    message.editedAt = new Date();
+
+    await message.save();
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete Message (soft delete)
+router.delete("/:messageId", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) return res.status(404).json({ error: "Message not found" });
+
+    // Only sender can delete
+    if (message.sender.toString() !== userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    message.isDeleted = true;
+    message.deletedAt = new Date();
+    message.content = ""; // Clear content for privacy
+
+    await message.save();
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Clear all messages in a chat
-router.delete("/:chatId", async (req, res) => {
+router.delete("/chat/:chatId", async (req, res) => {
   try {
     await Message.deleteMany({ chat: req.params.chatId });
     res.json({ message: "Chat cleared successfully" });

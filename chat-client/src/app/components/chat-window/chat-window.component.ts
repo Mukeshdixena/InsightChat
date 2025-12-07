@@ -22,6 +22,19 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     isTyping: boolean = false;
     typingUserName: string = '';
 
+    // Reply functionality
+    replyingTo: any = null;
+
+    // Edit functionality
+    editingMessage: any = null;
+
+    // Reaction picker
+    showReactionPicker: { [key: string]: boolean } = {};
+    availableReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+    // Message menu
+    showMessageMenu: { [key: string]: boolean } = {};
+
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
     constructor(
@@ -79,6 +92,32 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
                 message.status = data.status;
                 if (data.readBy) message.readBy = data.readBy;
                 if (data.deliveredTo) message.deliveredTo = data.deliveredTo;
+            }
+        });
+
+        // Listen for reaction updates
+        this.socketService.onReactionUpdate().subscribe((data: any) => {
+            const message = this.messages.find(m => m._id === data.messageId);
+            if (message) {
+                this.fetchMessages(); // Refresh to get updated reactions
+            }
+        });
+
+        // Listen for message edits
+        this.socketService.onMessageUpdate().subscribe((data: any) => {
+            const message = this.messages.find(m => m._id === data.messageId);
+            if (message) {
+                message.content = data.content;
+                message.isEdited = data.isEdited;
+            }
+        });
+
+        // Listen for message deletions
+        this.socketService.onMessageRemove().subscribe((data: any) => {
+            const message = this.messages.find(m => m._id === data.messageId);
+            if (message) {
+                message.isDeleted = true;
+                message.content = '';
             }
         });
     }
@@ -190,14 +229,25 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     sendMessage() {
         if (!this.newMessage.trim()) return;
 
+        // If editing, save edit instead
+        if (this.editingMessage) {
+            this.saveEdit();
+            return;
+        }
+
         this.socketService.stopTyping(this.chat._id);
         this.typing = false;
 
-        const messageData = {
+        const messageData: any = {
             content: this.newMessage,
             chatId: this.chat._id,
             userId: this.currentUser._id
         };
+
+        // Add replyTo if replying
+        if (this.replyingTo) {
+            messageData.replyTo = this.replyingTo._id;
+        }
 
         this.http.post('http://localhost:3000/messages', messageData).subscribe({
             next: (data: any) => {
@@ -208,6 +258,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
                     this.messages.push(data);
                 }
                 this.newMessage = "";
+                this.replyingTo = null; // Clear reply after sending
                 this.scrollToBottom();
             },
             error: (err) => console.error("Failed to send message", err)
@@ -259,5 +310,113 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         try {
             this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
         } catch (err) { }
+    }
+
+    // -------------------------
+    // REACTION METHODS
+    // -------------------------
+    toggleReactionPicker(messageId: string) {
+        this.showReactionPicker[messageId] = !this.showReactionPicker[messageId];
+    }
+
+    addReaction(message: any, emoji: string) {
+        this.http.post(`http://localhost:3000/messages/${message._id}/reaction`, {
+            emoji,
+            userId: this.currentUser._id
+        }).subscribe({
+            next: (updatedMessage: any) => {
+                const msg = this.messages.find(m => m._id === message._id);
+                if (msg) {
+                    msg.reactions = updatedMessage.reactions;
+                }
+                this.socketService.emitReaction(message._id, emoji, this.currentUser._id, this.chat._id);
+                this.showReactionPicker[message._id] = false;
+            },
+            error: (err) => console.error("Failed to add reaction", err)
+        });
+    }
+
+    hasUserReacted(message: any, emoji: string): boolean {
+        if (!message.reactions) return false;
+        const reaction = message.reactions.find((r: any) => r.emoji === emoji);
+        return reaction ? reaction.users.includes(this.currentUser._id) : false;
+    }
+
+    getReactionCount(message: any, emoji: string): number {
+        if (!message.reactions) return 0;
+        const reaction = message.reactions.find((r: any) => r.emoji === emoji);
+        return reaction ? reaction.users.length : 0;
+    }
+
+    // -------------------------
+    // REPLY METHODS
+    // -------------------------
+    replyToMessage(message: any) {
+        this.replyingTo = message;
+        this.editingMessage = null; // Cancel edit if replying
+    }
+
+    cancelReply() {
+        this.replyingTo = null;
+    }
+
+    // -------------------------
+    // EDIT METHODS
+    // -------------------------
+    startEdit(message: any) {
+        if (!this.isMyMessage(message) || message.isDeleted) return;
+
+        this.editingMessage = message;
+        this.newMessage = message.content;
+        this.replyingTo = null; // Cancel reply if editing
+    }
+
+    saveEdit() {
+        if (!this.editingMessage || !this.newMessage.trim()) return;
+
+        this.http.put(`http://localhost:3000/messages/${this.editingMessage._id}`, {
+            content: this.newMessage,
+            userId: this.currentUser._id
+        }).subscribe({
+            next: (updatedMessage: any) => {
+                const msg = this.messages.find(m => m._id === this.editingMessage._id);
+                if (msg) {
+                    msg.content = updatedMessage.content;
+                    msg.isEdited = true;
+                    msg.editedAt = updatedMessage.editedAt;
+                }
+                this.socketService.emitMessageEdit(this.editingMessage._id, this.newMessage, this.chat._id);
+                this.cancelEdit();
+            },
+            error: (err) => console.error("Failed to edit message", err)
+        });
+    }
+
+    cancelEdit() {
+        this.editingMessage = null;
+        this.newMessage = '';
+    }
+
+    // -------------------------
+    // DELETE METHODS
+    // -------------------------
+    deleteMessage(message: any) {
+        if (!this.isMyMessage(message) || message.isDeleted) return;
+
+        if (!confirm('Are you sure you want to delete this message?')) return;
+
+        this.http.delete(`http://localhost:3000/messages/${message._id}`, {
+            body: { userId: this.currentUser._id }
+        }).subscribe({
+            next: () => {
+                const msg = this.messages.find(m => m._id === message._id);
+                if (msg) {
+                    msg.isDeleted = true;
+                    msg.content = '';
+                }
+                this.socketService.emitMessageDelete(message._id, this.chat._id);
+            },
+            error: (err) => console.error("Failed to delete message", err)
+        });
     }
 }
