@@ -313,6 +313,27 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     }
 
     // -------------------------
+    // MENU METHODS
+    // -------------------------
+    toggleMessageMenu(messageId: string) {
+        // Close other menus if needed, or just toggle this one
+        const currentState = this.showMessageMenu[messageId];
+        // Optional: close all others
+        this.showMessageMenu = {};
+        this.showMessageMenu[messageId] = !currentState;
+    }
+
+    copyMessage(message: any) {
+        if (!message || !message.content) return;
+        navigator.clipboard.writeText(message.content).then(() => {
+            console.log('Message copied to clipboard');
+            // Optional: Show a toast or snackbar here
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
+    // -------------------------
     // REACTION METHODS
     // -------------------------
     toggleReactionPicker(messageId: string) {
