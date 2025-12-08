@@ -1,0 +1,23 @@
+/* Custom Rewrite Input */
+.custom-rewrite-input {
+    flex: 1;
+    margin-right: 10px;
+    padding: 6px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 13px;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.custom-rewrite-input:focus {
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+}
+
+.custom-rewrite-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}

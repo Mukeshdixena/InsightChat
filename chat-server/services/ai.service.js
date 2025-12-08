@@ -74,13 +74,19 @@ const rewriteText = async (text, style) => {
     }
 };
 
-const generateRewriteSuggestions = async (text) => {
+const generateRewriteSuggestions = async (text, customPrompt) => {
     if (!model) return null;
     try {
-        const prompt = `Rewrite the following text in 3 styles: Grammar (fix grammar/spelling), Casual (friendly), and Formal (professional).
-        Return the result correctly formatted as a JSON object with keys: "grammar", "casual", "formal".
-        Do not include markdown code block syntax (like \`\`\`json). Just the raw JSON string.
-        Text: "${text}"`;
+        let prompt = `Rewrite the following text in 3 styles: Grammar (fix grammar/spelling), Casual (friendly), and Formal (professional).`;
+
+        if (customPrompt && customPrompt.trim()) {
+            prompt = `Rewrite the following text in 4 styles: Grammar (fix grammar/spelling), Casual (friendly), Formal (professional), and Custom (following this instruction: "${customPrompt}").`;
+            prompt += `\nReturn the result correctly formatted as a JSON object with keys: "grammar", "casual", "formal", "custom".`;
+        } else {
+            prompt += `\nReturn the result correctly formatted as a JSON object with keys: "grammar", "casual", "formal".`;
+        }
+
+        prompt += `\nDo not include markdown code block syntax (like \`\`\`json). Just the raw JSON string.\nText: "${text}"`;
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();

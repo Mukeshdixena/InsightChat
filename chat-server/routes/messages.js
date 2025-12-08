@@ -4,19 +4,21 @@ const Message = require("../models/message");
 const User = require("../models/user");
 const Chat = require("../models/chat");
 
-// Get messages for a specific chat
 router.get("/:chatId", async (req, res) => {
   try {
     const messages = await Message.find({ chat: req.params.chatId })
       .populate("sender", "username")
-      .populate("chat");
+      .populate("chat")
+      .populate({
+        path: "replyTo",
+        populate: { path: "sender", select: "username" }
+      });
     res.json(messages);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Send message (API fallback if socket fails, or just for verification)
 router.post("/", async (req, res) => {
   const { content, chatId, userId } = req.body;
 
@@ -46,18 +48,15 @@ router.post("/", async (req, res) => {
 
     await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message });
 
-    // --- AI BOT LOGIC START ---
     const aiService = require("../services/ai.service");
     const aiBotId = aiService.getAiBotId();
     let aiResponseGenerated = false;
 
     if (aiBotId) {
-      // Check participation
       const isAiChat = message.chat.users.some(u => u._id.toString() === aiBotId);
       const isSenderBot = userId === aiBotId;
 
       if (isAiChat && !isSenderBot) {
-        // Generate AI Response synchronously
         try {
           const prompt = content;
           const senderName = message.sender.username || "User";
@@ -79,11 +78,9 @@ router.post("/", async (req, res) => {
           }
         } catch (aiError) {
           console.error("AI Generation failed:", aiError);
-          // We continue without AI response, just treating it as a normal message
         }
       }
     }
-    // --- AI BOT LOGIC END ---
 
     if (aiResponseGenerated) {
       // Return full history so frontend shows both messages instantly
@@ -100,8 +97,81 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Clear all messages in a chat
-router.delete("/:chatId", async (req, res) => {
+router.post("/:messageId/reaction", async (req, res) => {
+  try {
+    const { emoji, userId } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) return res.status(404).json({ error: "Message not found" });
+
+    let reaction = message.reactions.find(r => r.emoji === emoji);
+
+    if (reaction) {
+      const userIndex = reaction.users.indexOf(userId);
+      if (userIndex > -1) {
+        reaction.users.splice(userIndex, 1);
+        if (reaction.users.length === 0) {
+          message.reactions = message.reactions.filter(r => r.emoji !== emoji);
+        }
+      } else {
+        reaction.users.push(userId);
+      }
+    } else {
+      message.reactions.push({ emoji, users: [userId] });
+    }
+
+    await message.save();
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put("/:messageId", async (req, res) => {
+  try {
+    const { content, userId } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) return res.status(404).json({ error: "Message not found" });
+
+    if (message.sender.toString() !== userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    message.content = content;
+    message.isEdited = true;
+    message.editedAt = new Date();
+
+    await message.save();
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete("/:messageId", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const message = await Message.findById(req.params.messageId);
+
+    if (!message) return res.status(404).json({ error: "Message not found" });
+
+    if (message.sender.toString() !== userId) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    message.isDeleted = true;
+    message.deletedAt = new Date();
+    message.content = ""; // Clear content for privacy
+
+    await message.save();
+    res.json(message);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete("/chat/:chatId", async (req, res) => {
   try {
     await Message.deleteMany({ chat: req.params.chatId });
     res.json({ message: "Chat cleared successfully" });
