@@ -288,6 +288,12 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.showMessageMenu[messageId] = !currentState;
     }
 
+    showChatInfo: boolean = false;
+
+    toggleChatDetails() {
+        this.showChatInfo = !this.showChatInfo;
+    }
+
     copyMessage(message: any) {
         if (!message || !message.content) return;
         navigator.clipboard.writeText(message.content).then(() => {

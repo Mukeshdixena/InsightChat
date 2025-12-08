@@ -1,8 +1,36 @@
 <div class="chat-window-container" *ngIf="chat; else noChat">
-    <div class="header">
+    <div class="header" (click)="toggleChatDetails()" style="cursor: pointer;">
         <div class="avatar">{{ getChatName().charAt(0) }}</div>
         <div class="chat-details">
             <div class="chat-name">{{ getChatName() }}</div>
+            <div class="chat-subtitle" *ngIf="chat.isGroupChat" style="font-size: 11px; color: #ccc;">tap for info</div>
+        </div>
+    </div>
+
+    <!-- Chat Info Modal -->
+    <div class="chat-info-overlay" *ngIf="showChatInfo" (click)="toggleChatDetails()">
+        <div class="chat-info-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>{{ chat.isGroupChat ? 'Group Info' : 'Contact Info' }}</h3>
+                <span class="close-modal" (click)="toggleChatDetails()">×</span>
+            </div>
+            <div class="modal-body">
+                <div class="large-avatar">{{ getChatName().charAt(0) }}</div>
+                <h2 class="modal-chat-name">{{ getChatName() }}</h2>
+
+                <div class="members-section" *ngIf="chat.isGroupChat">
+                    <h4>Members ({{ chat.users.length }})</h4>
+                    <div class="members-list">
+                        <div class="member-item" *ngFor="let user of chat.users">
+                            <div class="member-avatar">{{ user.username.charAt(0) }}</div>
+                            <div class="member-info">
+                                <span class="member-name">{{ user.username }}</span>
+                                <span class="member-badge" *ngIf="user._id === currentUser._id">(You)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -748,3 +748,152 @@ body.dark-theme .message.sent .message-content {
     color: var(--text-secondary);
     opacity: 0.7;
 }
+
+/* Chat Info Modal */
+.chat-info-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s;
+}
+
+.chat-info-modal {
+    width: 350px;
+    max-width: 90%;
+    background-color: var(--header-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: scaleIn 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--chat-bg);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-color);
+}
+
+.close-modal {
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    line-height: 1;
+}
+
+.modal-body {
+    padding: 25px 20px;
+    text-align: center;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.large-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--avatar-bg);
+    color: var(--avatar-text);
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-weight: 500;
+}
+
+.modal-chat-name {
+    margin: 0 0 20px;
+    font-size: 20px;
+    color: var(--text-color);
+}
+
+.members-section h4 {
+    text-align: left;
+    margin: 20px 0 10px;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
+.members-list {
+    text-align: left;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.member-item:last-child {
+    border-bottom: none;
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--avatar-bg);
+    color: var(--avatar-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 14px;
+}
+
+.member-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.member-name {
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.member-badge {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
