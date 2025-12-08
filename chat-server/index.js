@@ -66,9 +66,10 @@ io.on("connection", (socket) => {
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
   // AI Rewrite Handler
-  socket.on("request rewrite", async (text) => {
+  socket.on("request rewrite", async (data) => {
     try {
-      const suggestions = await aiService.generateRewriteSuggestions(text);
+      const { text, customPrompt } = typeof data === 'object' ? data : { text: data };
+      const suggestions = await aiService.generateRewriteSuggestions(text, customPrompt);
       if (suggestions) {
         socket.emit("rewrite suggestions", { original: text, suggestions });
       }
@@ -96,7 +97,7 @@ io.on("connection", (socket) => {
       const message = await Message.findById(messageId);
       if (!message) return;
 
-      
+
       // Add user to deliveredTo array if not already there
       if (!message.deliveredTo.includes(userId)) {
         message.deliveredTo.push(userId);

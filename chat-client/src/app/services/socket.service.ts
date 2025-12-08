@@ -122,8 +122,8 @@ export class SocketService implements OnDestroy {
   // -------------------------
   // AI EVENTS
   // -------------------------
-  requestRewrite(text: string) {
-    this.socket.emit("request rewrite", text);
+  requestRewrite(text: string, customPrompt?: string) {
+    this.socket.emit("request rewrite", { text, customPrompt });
   }
 
   onRewriteSuggestions(): Observable<any> {

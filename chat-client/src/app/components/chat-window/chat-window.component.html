@@ -85,12 +85,17 @@
     </div>
 
     <!-- Rewrite Tools -->
+    <!-- Rewrite Tools -->
     <div class="rewrite-tools" *ngIf="newMessage.trim().length > 0 || showRewritePopup">
         <button class="rewrite-trigger-btn" (click)="requestRewrite()" [disabled]="isRewriting"
             *ngIf="!showRewritePopup">
             <span *ngIf="!isRewriting">✨ Rewrite with AI</span>
             <span *ngIf="isRewriting">Thinking...</span>
         </button>
+
+        <input type="text" [(ngModel)]="customRewritePrompt"
+            placeholder="Custom style (e.g. 'formatting', 'shakespear')" class="custom-rewrite-input"
+            *ngIf="!showRewritePopup" (keyup.enter)="requestRewrite()" />
 
         <div class="rewrite-popup" *ngIf="showRewritePopup && rewriteSuggestions">
             <div class="popup-header">
@@ -108,6 +113,11 @@
             <div class="suggestion-item" (click)="applyRewrite(rewriteSuggestions.formal)">
                 <span class="style-label">Formal:</span>
                 <span class="suggestion-text">{{ rewriteSuggestions.formal }}</span>
+            </div>
+            <div class="suggestion-item" *ngIf="rewriteSuggestions.custom"
+                (click)="applyRewrite(rewriteSuggestions.custom)">
+                <span class="style-label">Custom:</span>
+                <span class="suggestion-text">{{ rewriteSuggestions.custom }}</span>
             </div>
         </div>
     </div>

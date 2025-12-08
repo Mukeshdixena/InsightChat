@@ -268,11 +268,12 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     rewriteSuggestions: any = null;
     showRewritePopup: boolean = false;
     isRewriting: boolean = false;
+    customRewritePrompt: string = '';
 
     requestRewrite() {
         if (!this.newMessage.trim() || this.newMessage.trim().length <= 3) return;
         this.isRewriting = true;
-        this.socketService.requestRewrite(this.newMessage);
+        this.socketService.requestRewrite(this.newMessage, this.customRewritePrompt);
     }
 
     applyRewrite(text: string) {
