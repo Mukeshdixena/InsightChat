@@ -96,6 +96,7 @@ io.on("connection", (socket) => {
       const message = await Message.findById(messageId);
       if (!message) return;
 
+      
       // Add user to deliveredTo array if not already there
       if (!message.deliveredTo.includes(userId)) {
         message.deliveredTo.push(userId);
