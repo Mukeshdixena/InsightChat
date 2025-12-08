@@ -1,0 +1,113 @@
+/* Message Actions Trigger */
+.message-menu-trigger {
+    opacity: 0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 2px;
+    right: -25px;
+    /* Position to the right of the bubble */
+}
+
+.message.sent .message-menu-trigger {
+    right: auto;
+    left: -25px;
+    /* Position to the left for sent messages */
+}
+
+.message:hover .message-menu-trigger,
+.message-menu-trigger.active {
+    opacity: 1;
+}
+
+.message-menu-trigger:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+}
+
+.menu-chevron {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s;
+}
+
+.message-menu-trigger.active .menu-chevron {
+    transform: rotate(180deg);
+}
+
+
+/* Message Actions Dropdown Menu */
+.message-actions-menu {
+    position: absolute;
+    top: 25px;
+    right: 0;
+    width: 160px;
+    background-color: var(--header-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    overflow: hidden;
+    padding: 6px;
+    animation: menuSlideFade 0.2s ease-out;
+    border: 1px solid var(--border-color);
+}
+
+/* Adjust position for sent messages so it doesn't go off-screen easily */
+.message.sent .message-actions-menu {
+    right: auto;
+    left: 0;
+}
+
+@keyframes menuSlideFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.menu-item {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    color: var(--text-color);
+    transition: background-color 0.1s;
+}
+
+.menu-item:hover {
+    background-color: var(--message-in);
+}
+
+.menu-icon {
+    font-size: 16px;
+    width: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.menu-label {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.menu-item.delete {
+    color: #ef4444;
+    /* Red color for delete */
+}
+
+.menu-item.delete:hover {
+    background-color: rgba(239, 68, 68, 0.08);
+}

@@ -27,11 +27,39 @@
                     <span *ngIf="getMessageStatus(msg) === 'delivered'" class="status-tick">✓✓</span>
                     <span *ngIf="getMessageStatus(msg) === 'read'" class="status-tick read">✓✓</span>
                 </span>
-            </div>
+                <!-- Message Actions Menu Trigger -->
+                <div class="message-menu-trigger" *ngIf="!msg.isDeleted" (click)="toggleMessageMenu(msg._id)"
+                    [class.active]="showMessageMenu[msg._id]">
+                    <svg class="menu-chevron" viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
+                    </svg>
+                </div>
 
-            <!-- Deleted Message -->
-            <div class="message-content deleted" *ngIf="msg.isDeleted">
-                <em>Message deleted</em>
+                <!-- Message Actions Dropdown Menu -->
+                <div class="message-actions-menu" *ngIf="showMessageMenu[msg._id] && !msg.isDeleted">
+                    <div class="menu-item" (click)="toggleReactionPicker(msg._id); toggleMessageMenu(msg._id)">
+                        <span class="menu-icon">😊</span>
+                        <span class="menu-label">React</span>
+                    </div>
+                    <div class="menu-item" (click)="replyToMessage(msg); toggleMessageMenu(msg._id)">
+                        <span class="menu-icon">↩️</span>
+                        <span class="menu-label">Reply</span>
+                    </div>
+                    <div class="menu-item" (click)="copyMessage(msg); toggleMessageMenu(msg._id)">
+                        <span class="menu-icon">📋</span>
+                        <span class="menu-label">Copy</span>
+                    </div>
+                    <div class="menu-item" *ngIf="isMyMessage(msg)"
+                        (click)="startEdit(msg); toggleMessageMenu(msg._id)">
+                        <span class="menu-icon">✏️</span>
+                        <span class="menu-label">Edit</span>
+                    </div>
+                    <div class="menu-item delete" *ngIf="isMyMessage(msg)"
+                        (click)="deleteMessage(msg); toggleMessageMenu(msg._id)">
+                        <span class="menu-icon">🗑️</span>
+                        <span class="menu-label">Delete</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Reactions -->
@@ -41,36 +69,6 @@
                     (click)="addReaction(msg, reaction.emoji)">
                     {{ reaction.emoji }} {{ reaction.users.length }}
                 </span>
-            </div>
-
-            <!-- Message Actions Menu Trigger -->
-            <div class="message-menu-trigger" *ngIf="!msg.isDeleted" (click)="toggleMessageMenu(msg._id)">
-                <span class="menu-icon">⋮</span>
-            </div>
-
-            <!-- Message Actions Dropdown Menu -->
-            <div class="message-actions-menu" *ngIf="showMessageMenu[msg._id] && !msg.isDeleted">
-                <div class="menu-item" (click)="toggleReactionPicker(msg._id); toggleMessageMenu(msg._id)">
-                    <span class="menu-icon">😊</span>
-                    <span class="menu-label">React</span>
-                </div>
-                <div class="menu-item" (click)="replyToMessage(msg); toggleMessageMenu(msg._id)">
-                    <span class="menu-icon">↩️</span>
-                    <span class="menu-label">Reply</span>
-                </div>
-                <div class="menu-item" (click)="copyMessage(msg); toggleMessageMenu(msg._id)">
-                    <span class="menu-icon">📋</span>
-                    <span class="menu-label">Copy</span>
-                </div>
-                <div class="menu-item" *ngIf="isMyMessage(msg)" (click)="startEdit(msg); toggleMessageMenu(msg._id)">
-                    <span class="menu-icon">✏️</span>
-                    <span class="menu-label">Edit</span>
-                </div>
-                <div class="menu-item delete" *ngIf="isMyMessage(msg)"
-                    (click)="deleteMessage(msg); toggleMessageMenu(msg._id)">
-                    <span class="menu-icon">🗑️</span>
-                    <span class="menu-label">Delete</span>
-                </div>
             </div>
 
             <!-- Reaction Picker -->

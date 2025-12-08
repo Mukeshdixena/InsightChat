@@ -1,0 +1,89 @@
+/* Message Actions Trigger */
+.message-menu-trigger {
+    opacity: 0;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    /* Inside the bubble */
+    z-index: 5;
+}
+
+/* Ensure padding for text so it doesn't overlap trigger */
+.message-content {
+    padding-right: 28px;
+    /* Make space for the trigger */
+}
+
+/* Remove separate rules for sent messages since it's now relative to bubble */
+.message.sent .message-menu-trigger {
+    right: 5px;
+    left: auto;
+}
+
+/* Rest of trigger styles */
+.message:hover .message-menu-trigger,
+.message-menu-trigger.active {
+    opacity: 1;
+}
+
+.message-menu-trigger:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+}
+
+.menu-chevron {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s;
+}
+
+.message-menu-trigger.active .menu-chevron {
+    transform: rotate(180deg);
+}
+
+
+/* Message Actions Dropdown Menu */
+.message-actions-menu {
+    position: absolute;
+    top: 30px;
+    /* Below the trigger */
+    right: 0;
+    width: 160px;
+    background-color: var(--header-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    overflow: hidden;
+    padding: 6px;
+    animation: menuSlideFade 0.2s ease-out;
+    border: 1px solid var(--border-color);
+}
+
+.message.sent .message-actions-menu {
+    /* For sent messages, align right as well since it's inside the right-aligned bubble? 
+       No, bubble is right aligned, content is inside. 
+       If menu is right: 0 relative to bubble, it stays inside bubble width (if overflow visible).
+       Actually, keep it right aligned for consistency. */
+    right: 0;
+    left: auto;
+}
+
+@keyframes menuSlideFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
