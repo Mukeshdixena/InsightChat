@@ -22,17 +22,13 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     isTyping: boolean = false;
     typingUserName: string = '';
 
-    // Reply functionality
     replyingTo: any = null;
 
-    // Edit functionality
     editingMessage: any = null;
 
-    // Reaction picker
     showReactionPicker: { [key: string]: boolean } = {};
     availableReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
-    // Message menu
     showMessageMenu: { [key: string]: boolean } = {};
 
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
@@ -52,11 +48,8 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
                 this.messages.push(message);
                 this.scrollToBottom();
 
-                // Mark message as delivered immediately
                 this.socketService.emitMessageDelivered(message._id, this.currentUser._id);
 
-                // Mark as read after a short delay (simulating user viewing the message)
-                // This happens when chat is already open and active
                 setTimeout(() => {
                     this.markMessagesAsRead([message._id]);
                 }, 500);
@@ -65,7 +58,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
 
         this.socketService.typing().subscribe(() => {
             this.isTyping = true;
-            // Get typing user name from chat users
             if (this.chat && !this.chat.isGroupChat) {
                 const otherUser = this.chat.users.find((u: any) => u._id !== this.currentUser._id);
                 this.typingUserName = otherUser ? otherUser.username : '';
@@ -78,14 +70,11 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         });
 
         this.socketService.onRewriteSuggestions().subscribe((data: any) => {
-            // Check if suggestions match current input (simple validation)
-            // Or just always show them
             this.rewriteSuggestions = data.suggestions;
             this.showRewritePopup = true;
             this.isRewriting = false;
         });
 
-        // Listen for message status updates
         this.socketService.onMessageStatusUpdate().subscribe((data: any) => {
             const message = this.messages.find(m => m._id === data.messageId);
             if (message) {
@@ -95,15 +84,13 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             }
         });
 
-        // Listen for reaction updates
         this.socketService.onReactionUpdate().subscribe((data: any) => {
             const message = this.messages.find(m => m._id === data.messageId);
             if (message) {
-                this.fetchMessages(); // Refresh to get updated reactions
+                this.fetchMessages();
             }
         });
 
-        // Listen for message edits
         this.socketService.onMessageUpdate().subscribe((data: any) => {
             const message = this.messages.find(m => m._id === data.messageId);
             if (message) {
@@ -112,7 +99,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             }
         });
 
-        // Listen for message deletions
         this.socketService.onMessageRemove().subscribe((data: any) => {
             const message = this.messages.find(m => m._id === data.messageId);
             if (message) {
@@ -129,7 +115,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             this.isTyping = false;
             this.typingUserName = '';
 
-            // Mark all unread messages as delivered and read when opening chat
             setTimeout(() => this.markAllMessagesAsRead(), 500);
         }
     }
@@ -141,7 +126,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     rewriteDebounceTimer: any;
 
     typingHandler() {
-        // Hide popup immediately when typing resumes
         if (this.showRewritePopup) {
             this.showRewritePopup = false;
         }
@@ -154,13 +138,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         let lastTypingTime = new Date().getTime();
         var timerLength = 3000;
 
-        // Clear existing typing stop timer
-        // (Note: The original code recreated the timer locally every time which was buggy/redundant logic 
-        // effectively only checking time diff in a closure. 
-        // I will keep the existing typing indicator logic structure but add my own separate debounce for rewrite
-        // to minimize regression risk on the 'typing...' indicator itself, or I could merge them.)
-
-        // Existing typing indicator logic (kept as is mostly, just re-wrapped/verified)
         setTimeout(() => {
             var timeNow = new Date().getTime();
             var timeDiff = timeNow - lastTypingTime;
@@ -170,7 +147,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             }
         }, timerLength);
 
-        // Auto-Trigger Rewrite Logic
         if (this.rewriteDebounceTimer) {
             clearTimeout(this.rewriteDebounceTimer);
         }
@@ -179,7 +155,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             if (this.newMessage.trim().length > 3) {
                 this.requestRewrite();
             }
-        }, 2000); // 2 seconds pause trigger
+        }, 2000);
     }
 
     fetchMessages() {
@@ -188,7 +164,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
                 this.messages = data;
                 this.scrollToBottom();
 
-                // Mark messages as delivered and read after fetching
                 setTimeout(() => this.markAllMessagesAsRead(), 500);
             },
             error: (err) => console.error("Failed to fetch messages", err)
@@ -198,7 +173,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     markAllMessagesAsRead() {
         if (!this.messages || this.messages.length === 0) return;
 
-        // Get all message IDs that are not sent by current user and not already read
         const unreadMessageIds = this.messages
             .filter(msg => !this.isMyMessage(msg) && (!msg.readBy || !msg.readBy.includes(this.currentUser._id)))
             .map(msg => msg._id);
@@ -211,10 +185,8 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     markMessagesAsRead(messageIds: string[]) {
         if (!messageIds || messageIds.length === 0) return;
 
-        // Emit read status for all messages
         this.socketService.emitMessagesRead(messageIds, this.currentUser._id);
 
-        // Update local status immediately for better UX
         messageIds.forEach(id => {
             const msg = this.messages.find(m => m._id === id);
             if (msg) {
@@ -229,7 +201,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     sendMessage() {
         if (!this.newMessage.trim()) return;
 
-        // If editing, save edit instead
         if (this.editingMessage) {
             this.saveEdit();
             return;
@@ -244,7 +215,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             userId: this.currentUser._id
         };
 
-        // Add replyTo if replying
         if (this.replyingTo) {
             messageData.replyTo = this.replyingTo._id;
         }
@@ -258,7 +228,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
                     this.messages.push(data);
                 }
                 this.newMessage = "";
-                this.replyingTo = null; // Clear reply after sending
+                this.replyingTo = null;
                 this.scrollToBottom();
             },
             error: (err) => console.error("Failed to send message", err)
@@ -303,7 +273,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     getMessageStatus(msg: any): string {
         if (!this.isMyMessage(msg)) return '';
 
-        // Return status: 'sent', 'delivered', or 'read'
         return msg.status || 'sent';
     }
 
@@ -313,13 +282,8 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         } catch (err) { }
     }
 
-    // -------------------------
-    // MENU METHODS
-    // -------------------------
     toggleMessageMenu(messageId: string) {
-        // Close other menus if needed, or just toggle this one
         const currentState = this.showMessageMenu[messageId];
-        // Optional: close all others
         this.showMessageMenu = {};
         this.showMessageMenu[messageId] = !currentState;
     }
@@ -328,15 +292,11 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         if (!message || !message.content) return;
         navigator.clipboard.writeText(message.content).then(() => {
             console.log('Message copied to clipboard');
-            // Optional: Show a toast or snackbar here
         }).catch(err => {
             console.error('Failed to copy text: ', err);
         });
     }
 
-    // -------------------------
-    // REACTION METHODS
-    // -------------------------
     toggleReactionPicker(messageId: string) {
         this.showReactionPicker[messageId] = !this.showReactionPicker[messageId];
     }
@@ -370,27 +330,21 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         return reaction ? reaction.users.length : 0;
     }
 
-    // -------------------------
-    // REPLY METHODS
-    // -------------------------
     replyToMessage(message: any) {
         this.replyingTo = message;
-        this.editingMessage = null; // Cancel edit if replying
+        this.editingMessage = null;
     }
 
     cancelReply() {
         this.replyingTo = null;
     }
 
-    // -------------------------
-    // EDIT METHODS
-    // -------------------------
     startEdit(message: any) {
         if (!this.isMyMessage(message) || message.isDeleted) return;
 
         this.editingMessage = message;
         this.newMessage = message.content;
-        this.replyingTo = null; // Cancel reply if editing
+        this.replyingTo = null;
     }
 
     saveEdit() {
@@ -419,9 +373,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.newMessage = '';
     }
 
-    // -------------------------
-    // DELETE METHODS
-    // -------------------------
     deleteMessage(message: any) {
         if (!this.isMyMessage(message) || message.isDeleted) return;
 

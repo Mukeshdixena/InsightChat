@@ -9,7 +9,6 @@ async function updateExistingMessages() {
         await mongoose.connect(MONGO_URL);
         console.log("MongoDB connected");
 
-        // Update all messages that don't have status field
         const result = await Message.updateMany(
             { status: { $exists: false } },
             {

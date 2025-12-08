@@ -8,16 +8,13 @@ const messageSchema = new mongoose.Schema({
   status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
   deliveredTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
-  // Reactions
   reactions: [{
     emoji: { type: String, required: true },
     users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
   }],
 
-  // Reply/Quote
   replyTo: { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
 
-  // Edit/Delete
   isEdited: { type: Boolean, default: false },
   editedAt: { type: Date },
   isDeleted: { type: Boolean, default: false },

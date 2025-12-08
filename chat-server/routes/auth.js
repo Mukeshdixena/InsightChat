@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const auth = require("../middleware/auth");
 
-// Search Users
 router.get("/users", async (req, res) => {
   const keyword = req.query.search
     ? {
@@ -13,8 +12,6 @@ router.get("/users", async (req, res) => {
     }
     : {};
 
-  // Exclude self if we had req.user, but this is a public endpoint or we need to middleware it.
-  // For simplicity lets just return all matches.
   const users = await User.find(keyword);
   res.send(users);
 });
@@ -28,7 +25,6 @@ router.post("/signup", async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({ username, password: hash });
 
-    // Return token immediately for better UX? Or just message
     res.json({ message: "Signup successful", userId: user._id });
   } catch (err) {
     res.status(500).json({ message: "Error", error: err.message });

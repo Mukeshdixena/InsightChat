@@ -3,7 +3,6 @@ const router = express.Router();
 const Chat = require("../models/chat");
 const User = require("../models/user");
 
-// Create or fetch 1-on-1 chat
 router.post("/", async (req, res) => {
     const { userId, otherUserId } = req.body;
 
@@ -48,7 +47,6 @@ router.post("/", async (req, res) => {
     }
 });
 
-// Fetch all chats for a user
 router.get("/:userId", async (req, res) => {
     try {
         Chat.find({ users: { $elemMatch: { $eq: req.params.userId } } })
@@ -68,7 +66,6 @@ router.get("/:userId", async (req, res) => {
     }
 });
 
-// Create Group Chat
 router.post("/group", async (req, res) => {
     if (!req.body.users || !req.body.name || !req.body.adminId) {
         return res.status(400).send({ message: "Please Fill all the fields" });
@@ -80,7 +77,6 @@ router.post("/group", async (req, res) => {
         return res.status(400).send("More than 1 user is required to form a group chat");
     }
 
-    // Add the admin to the group users
     users.push(req.body.adminId);
 
     try {
@@ -101,7 +97,6 @@ router.post("/group", async (req, res) => {
     }
 });
 
-// Rename Group
 router.put("/rename", async (req, res) => {
     const { chatId, chatName } = req.body;
 
@@ -121,7 +116,6 @@ router.put("/rename", async (req, res) => {
     }
 });
 
-// Add to Group
 router.put("/groupadd", async (req, res) => {
     const { chatId, userId } = req.body;
 
@@ -141,7 +135,6 @@ router.put("/groupadd", async (req, res) => {
     }
 });
 
-// Remove from Group
 router.put("/groupremove", async (req, res) => {
     const { chatId, userId } = req.body;
 

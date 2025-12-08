@@ -25,7 +25,6 @@ app.use(express.json());
 const MONGO_URL = process.env.MONGO_URL;
 const PORT = process.env.PORT || 3000;
 
-// Initialize Gemini & Bot
 mongoose.connect(MONGO_URL)
   .then(async () => {
     console.log("MongoDB connected");
@@ -65,7 +64,6 @@ io.on("connection", (socket) => {
   socket.on("typing", (room) => socket.in(room).emit("typing"));
   socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
 
-  // AI Rewrite Handler
   socket.on("request rewrite", async (data) => {
     try {
       const { text, customPrompt } = typeof data === 'object' ? data : { text: data };
@@ -88,28 +86,23 @@ io.on("connection", (socket) => {
       socket.in(user._id).emit("message received", newMessageRecieved);
     });
 
-    // Handle AI Bot Response - REMOVED (Moved to REST API)
   });
 
-  // Message Delivered Event
   socket.on("message delivered", async ({ messageId, userId }) => {
     try {
       const message = await Message.findById(messageId);
       if (!message) return;
 
 
-      // Add user to deliveredTo array if not already there
       if (!message.deliveredTo.includes(userId)) {
         message.deliveredTo.push(userId);
 
-        // Update status to delivered if not already read
         if (message.status === 'sent') {
           message.status = 'delivered';
         }
 
         await message.save();
 
-        // Notify sender about delivery
         socket.in(message.sender.toString()).emit("message status updated", {
           messageId: message._id,
           status: message.status,
@@ -121,19 +114,16 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Message Read Event (single message)
   socket.on("message read", async ({ messageId, userId }) => {
     try {
       const message = await Message.findById(messageId);
       if (!message) return;
 
-      // Add user to readBy array if not already there
       if (!message.readBy.includes(userId)) {
         message.readBy.push(userId);
         message.status = 'read';
         await message.save();
 
-        // Notify sender about read status
         socket.in(message.sender.toString()).emit("message status updated", {
           messageId: message._id,
           status: message.status,
@@ -145,7 +135,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Batch Mark Messages as Read
   socket.on("messages read", async ({ messageIds, userId }) => {
     try {
       const messages = await Message.find({ _id: { $in: messageIds } });
@@ -156,7 +145,6 @@ io.on("connection", (socket) => {
           message.status = 'read';
           await message.save();
 
-          // Notify sender
           socket.in(message.sender.toString()).emit("message status updated", {
             messageId: message._id,
             status: message.status,
@@ -169,21 +157,15 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Reaction Events
   socket.on("reaction added", async ({ messageId, emoji, userId, chatId }) => {
-    // Broadcast to all users in the chat
     socket.in(chatId).emit("reaction updated", { messageId, emoji, userId });
   });
 
-  // Message Edit Event
   socket.on("message edited", async ({ messageId, content, chatId }) => {
-    // Broadcast to all users in the chat
     socket.in(chatId).emit("message updated", { messageId, content, isEdited: true });
   });
 
-  // Message Delete Event
   socket.on("message deleted", async ({ messageId, chatId }) => {
-    // Broadcast to all users in the chat
     socket.in(chatId).emit("message removed", { messageId });
   });
 

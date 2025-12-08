@@ -9,25 +9,21 @@
     <!-- Messages Area -->
     <div class="messages-container" #scrollContainer>
         <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
-            <!-- Reply Preview -->
             <div class="reply-preview" *ngIf="msg.replyTo">
                 <strong>{{ msg.replyTo.sender?.username || 'User' }}</strong>
                 <p>{{ msg.replyTo.content }}</p>
             </div>
 
-            <!-- Message Content -->
             <div class="message-content" *ngIf="!msg.isDeleted">
                 {{ msg.content }}
                 <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
                 <span class="edited-indicator" *ngIf="msg.isEdited">(edited)</span>
 
-                <!-- Status Ticks -->
                 <span class="message-status" *ngIf="isMyMessage(msg)">
                     <span *ngIf="getMessageStatus(msg) === 'sent'" class="status-tick">✓</span>
                     <span *ngIf="getMessageStatus(msg) === 'delivered'" class="status-tick">✓✓</span>
                     <span *ngIf="getMessageStatus(msg) === 'read'" class="status-tick read">✓✓</span>
                 </span>
-                <!-- Message Actions Menu Trigger -->
                 <div class="message-menu-trigger" *ngIf="!msg.isDeleted" (click)="toggleMessageMenu(msg._id)"
                     [class.active]="showMessageMenu[msg._id]">
                     <svg class="menu-chevron" viewBox="0 0 24 24" width="24" height="24">
@@ -35,7 +31,6 @@
                     </svg>
                 </div>
 
-                <!-- Message Actions Dropdown Menu -->
                 <div class="message-actions-menu" *ngIf="showMessageMenu[msg._id] && !msg.isDeleted">
                     <div class="menu-item" (click)="toggleReactionPicker(msg._id); toggleMessageMenu(msg._id)">
                         <span class="menu-icon">😊</span>
@@ -62,7 +57,6 @@
                 </div>
             </div>
 
-            <!-- Reactions -->
             <div class="reactions-display" *ngIf="msg.reactions && msg.reactions.length > 0">
                 <span *ngFor="let reaction of msg.reactions" class="reaction-bubble"
                     [class.user-reacted]="reaction.users.includes(currentUser._id)"
@@ -71,7 +65,6 @@
                 </span>
             </div>
 
-            <!-- Reaction Picker -->
             <div class="reaction-picker" *ngIf="showReactionPicker[msg._id]">
                 <span *ngFor="let emoji of availableReactions" class="emoji-option" (click)="addReaction(msg, emoji)">{{
                     emoji }}</span>
@@ -79,13 +72,10 @@
         </div>
     </div>
 
-    <!-- Typing Indicator -->
     <div class="typing-indicator" *ngIf="isTyping">
         <span class="typing-text">{{ typingUserName || 'Someone' }} is typing...</span>
     </div>
 
-    <!-- Rewrite Tools -->
-    <!-- Rewrite Tools -->
     <div class="rewrite-tools" *ngIf="newMessage.trim().length > 0 || showRewritePopup">
         <button class="rewrite-trigger-btn" (click)="requestRewrite()" [disabled]="isRewriting"
             *ngIf="!showRewritePopup">
@@ -122,9 +112,7 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <div class="footer">
-        <!-- Reply Preview in Input -->
         <div class="reply-preview-input" *ngIf="replyingTo">
             <div class="reply-info">
                 <span>Replying to <strong>{{ replyingTo.sender?.username || 'User' }}</strong></span>
@@ -133,7 +121,6 @@
             <button class="cancel-btn" (click)="cancelReply()">✕</button>
         </div>
 
-        <!-- Edit Mode Indicator -->
         <div class="edit-mode-indicator" *ngIf="editingMessage">
             <span>Editing message</span>
             <button class="cancel-btn" (click)="cancelEdit()">✕</button>
