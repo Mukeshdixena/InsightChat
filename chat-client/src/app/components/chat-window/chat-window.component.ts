@@ -147,15 +147,8 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
             }
         }, timerLength);
 
-        if (this.rewriteDebounceTimer) {
-            clearTimeout(this.rewriteDebounceTimer);
-        }
-
-        this.rewriteDebounceTimer = setTimeout(() => {
-            if (this.newMessage.trim().length > 3) {
-                this.requestRewrite();
-            }
-        }, 2000);
+        // Auto-Trigger Rewrite Logic REMOVED to save API key quota
+        // Only trigger manually via button
     }
 
     fetchMessages() {

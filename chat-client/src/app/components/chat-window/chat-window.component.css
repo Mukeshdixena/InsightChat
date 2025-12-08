@@ -108,6 +108,13 @@ body.dark-theme .message.sent .message-content {
     opacity: 0.8;
 }
 
+.message-sender-name {
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 2px;
+}
+
 /* Message Status Indicators */
 .message-status {
     display: inline-block;

@@ -43,6 +43,9 @@
             </div>
 
             <div class="message-content" *ngIf="!msg.isDeleted">
+                <div class="message-sender-name" *ngIf="chat.isGroupChat && !isMyMessage(msg)">
+                    {{ msg.sender?.username }}
+                </div>
                 {{ msg.content }}
                 <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
                 <span class="edited-indicator" *ngIf="msg.isEdited">(edited)</span>
