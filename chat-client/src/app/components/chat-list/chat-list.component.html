@@ -29,10 +29,14 @@
     </div>
 
     <div class="chats">
-        <div *ngFor="let chat of filteredChats" class="chat-item" (click)="selectChat(chat)">
+        <div *ngFor="let chat of filteredChats" class="chat-item" [class.active]="chat._id === selectedChatId"
+            (click)="selectChat(chat)">
             <div class="avatar">{{ getChatName(chat).charAt(0).toUpperCase() }}</div>
             <div class="chat-info">
-                <div class="chat-name">{{ getChatName(chat) }}</div>
+                <div class="chat-header">
+                    <div class="chat-name">{{ getChatName(chat) }}</div>
+                    <span class="badge" *ngIf="chat.unreadCount && chat.unreadCount > 0">{{ chat.unreadCount }}</span>
+                </div>
                 <div class="last-message">
                     {{ chat.latestMessage?.content || "No messages yet" }}
                 </div>

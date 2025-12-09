@@ -112,11 +112,16 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         if (changes['chat'] && this.chat) {
             this.fetchMessages();
             this.socketService.joinChat(this.chat._id);
+            this.socketService.setActiveChat(this.chat._id); // Set active chat
             this.isTyping = false;
             this.typingUserName = '';
 
             setTimeout(() => this.markAllMessagesAsRead(), 500);
         }
+    }
+
+    ngOnDestroy() {
+        this.socketService.clearActiveChat();
     }
 
     ngAfterViewChecked() {
