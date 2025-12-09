@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
 
 export interface ChatMessage {
   from: string;
@@ -15,9 +15,18 @@ export class SocketService implements OnDestroy {
   private destroy$ = new Subject<void>();
 
   isConnected = false;
+  activeChatId: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
 
   constructor() {
     this.initializeSocket();
+  }
+
+  setActiveChat(chatId: string) {
+    this.activeChatId.next(chatId);
+  }
+
+  clearActiveChat() {
+    this.activeChatId.next(null);
   }
 
   private initializeSocket() {

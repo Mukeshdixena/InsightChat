@@ -112,16 +112,39 @@
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-.chat-info {
-    flex: 1;
-    overflow: hidden;
+.chat-item.active {
+    background-color: var(--hover-bg);
+    /* Or a specific active color */
+    border-left: 4px solid var(--primary-color);
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
 }
 
 .chat-name {
     font-size: 16px;
     font-weight: 500;
     color: var(--text-color);
-    margin-bottom: 4px;
+    /* Remove margin-bottom as it's in chat-header now */
+}
+
+.badge {
+    background-color: #25d366;
+    /* WhatsApp green or your brand color */
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
 }
 
 .last-message {

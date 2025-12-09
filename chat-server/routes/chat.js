@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Chat = require("../models/chat");
 const User = require("../models/user");
+const Message = require("../models/message");
 
 router.post("/", async (req, res) => {
     const { userId, otherUserId } = req.body;
@@ -47,6 +48,8 @@ router.post("/", async (req, res) => {
     }
 });
 
+
+
 router.get("/:userId", async (req, res) => {
     try {
         Chat.find({ users: { $elemMatch: { $eq: req.params.userId } } })
@@ -59,7 +62,18 @@ router.get("/:userId", async (req, res) => {
                     path: "latestMessage.sender",
                     select: "username",
                 });
-                res.status(200).send(results);
+
+                // Calculate unread counts
+                const chatsWithUnread = await Promise.all(results.map(async (chat) => {
+                    const unreadCount = await Message.countDocuments({
+                        chat: chat._id,
+                        sender: { $ne: req.params.userId }, // Not sent by me
+                        readBy: { $ne: req.params.userId }  // Not read by me
+                    });
+                    return { ...chat._doc, unreadCount };
+                }));
+
+                res.status(200).send(chatsWithUnread);
             });
     } catch (error) {
         res.status(400).json(error.message);

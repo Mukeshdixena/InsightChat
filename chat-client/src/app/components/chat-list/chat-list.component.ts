@@ -1,8 +1,9 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { SocketService } from '../../services/socket.service';
 import { CreateGroupComponent } from '../create-group/create-group.component';
 import { StartChatComponent } from '../start-chat/start-chat.component';
 import { ProfileDrawerComponent } from '../profile-drawer/profile-drawer.component';
@@ -15,6 +16,7 @@ import { ProfileDrawerComponent } from '../profile-drawer/profile-drawer.compone
     styleUrls: ['./chat-list.component.css']
 })
 export class ChatListComponent implements OnInit {
+    @Input() selectedChatId: string | undefined;
     @Output() chatSelected = new EventEmitter<any>();
     chats: any[] = [];
     currentUser: any;
@@ -22,19 +24,43 @@ export class ChatListComponent implements OnInit {
     showStartChat = false;
     showProfileDrawer = false;
 
-    constructor(private http: HttpClient, private authService: AuthService) {
+    constructor(
+        private http: HttpClient,
+        private authService: AuthService,
+        private socketService: SocketService
+    ) {
         this.currentUser = this.authService.getCurrentUser();
     }
 
     ngOnInit() {
         this.fetchChats();
+
+        this.socketService.messageReceived().subscribe((message: any) => {
+            if (this.selectedChatId !== message.chat._id) {
+                const chat = this.chats.find(c => c._id === message.chat._id);
+                if (chat) {
+                    chat.unreadCount = (chat.unreadCount || 0) + 1;
+                    // Move to top
+                    this.chats = this.chats.filter(c => c._id !== chat._id);
+                    this.chats.unshift(chat);
+                } else {
+                    // New chat potentially, refresh list or handle add
+                    this.fetchChats();
+                }
+            } else {
+                // Even if selected, move to top
+                const chat = this.chats.find(c => c._id === message.chat._id);
+                if (chat) {
+                    this.chats = this.chats.filter(c => c._id !== chat._id);
+                    this.chats.unshift(chat);
+                }
+            }
+        });
     }
 
     fetchChats() {
         if (!this.currentUser || !this.currentUser._id) {
             console.warn("User not logged in or ID missing, retrying in 1s");
-            // Retry mechanics or redirect to login? 
-            // For now, just stop.
             return;
         }
 
@@ -84,6 +110,7 @@ export class ChatListComponent implements OnInit {
     }
 
     selectChat(chat: any) {
+        chat.unreadCount = 0;
         this.chatSelected.emit(chat);
     }
 
