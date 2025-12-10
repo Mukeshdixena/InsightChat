@@ -2,7 +2,7 @@
     <div class="header" (click)="toggleChatDetails()" style="cursor: pointer;">
         <div class="avatar">{{ getChatName().charAt(0) }}</div>
         <div class="chat-details">
-            <div class="chat-name">{{ getChatName() }}</div>
+            <div class="chat-name">{{ getChatName() | truncate:30 }}</div>
             <div class="chat-subtitle" *ngIf="chat.isGroupChat" style="font-size: 11px; color: #ccc;">tap for info</div>
         </div>
     </div>
@@ -39,7 +39,7 @@
         <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
             <div class="reply-preview" *ngIf="getReplyMessage(msg)">
                 <strong>{{ getSenderName(getReplyMessage(msg)) }}</strong>
-                <p>{{ getMessageContent(getReplyMessage(msg)) }}</p>
+                <p>{{ getMessageContent(getReplyMessage(msg)) | truncate:60 }}</p>
             </div>
 
             <div class="message-content" *ngIf="!msg.isDeleted">
@@ -147,7 +147,7 @@
         <div class="reply-preview-input" *ngIf="replyingTo">
             <div class="reply-info">
                 <span>Replying to <strong>{{ getSenderName(replyingTo) }}</strong></span>
-                <p>{{ getMessageContent(replyingTo) }}</p>
+                <p>{{ getMessageContent(replyingTo) | truncate:60 }}</p>
             </div>
             <button class="cancel-btn" (click)="cancelReply()">✕</button>
         </div>

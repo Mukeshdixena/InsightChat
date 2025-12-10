@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
 import { api } from '../../config/api';
+import { TruncatePipe } from '../pipes/truncate.pipe';
 
 @Component({
     selector: 'app-create-group',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TruncatePipe],
     templateUrl: './create-group.component.html',
     styleUrls: ['./create-group.component.css']
 })

@@ -1,85 +1,118 @@
 // controllers/authController.js
-
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const asyncHandler = require("../utils/asyncHandler");
 
-// Search users by username
-exports.searchUsers = async (req, res) => {
-  try {
-    const keyword = req.query.search
-      ? { username: { $regex: req.query.search, $options: "i" } }
-      : {};
+// @desc    Search users by username
+// @route   GET /auth/search?search=keyword
+// @access  Public
+exports.searchUsers = asyncHandler(async (req, res) => {
+  const keyword = req.query.search
+    ? { username: { $regex: req.query.search, $options: "i" } }
+    : {};
 
-    const users = await User.find(keyword);
-    return res.json(users);
-  } catch (err) {
-    return res.status(500).json({ message: "Search failed", error: err.message });
+  const users = await User.find(keyword).select("-password"); // Exclude password
+  res.json(users);
+});
+
+// @desc    Register a new user
+// @route   POST /auth/signup
+// @access  Public
+exports.signup = asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    res.status(400);
+    throw new Error("Please provide username and password");
   }
-};
 
-// User signup
-exports.signup = async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    const exist = await User.findOne({ username });
-    if (exist) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, password: hash });
-
-    return res.json({ message: "Signup successful", userId: user._id });
-  } catch (err) {
-    return res.status(500).json({ message: "Signup failed", error: err.message });
+  const userExists = await User.findOne({ username });
+  if (userExists) {
+    res.status(400);
+    throw new Error("User already exists");
   }
-};
 
-// User login
-exports.login = async (req, res) => {
-  try {
-    const { username, password } = req.body;
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+  const user = await User.create({
+    username,
+    password: hashedPassword,
+  });
 
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || "secret"
-    );
-
-    return res.json({ token, userId: user._id });
-  } catch (err) {
-    return res.status(500).json({ message: "Login failed", error: err.message });
+  if (user) {
+    res.json({
+      message: "Signup successful",
+      userId: user._id,
+      token: generateToken(user._id),
+    });
+  } else {
+    res.status(400);
+    throw new Error("Invalid user data");
   }
-};
+});
 
-// Update username or password
-exports.updateUser = async (req, res) => {
-  try {
-    const { username, password } = req.body;
+// @desc    Authenticate user & get token
+// @route   POST /auth/login
+// @access  Public
+exports.login = asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
 
-    const updateData = {};
-    if (username) updateData.username = username;
+  if (!username || !password) {
+    res.status(400);
+    throw new Error("Please provide username and password");
+  }
+
+  const user = await User.findOne({ username });
+
+  if (user && (await bcrypt.compare(password, user.password))) {
+    res.json({
+      token: generateToken(user._id),
+      userId: user._id,
+      username: user.username,
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid credentials");
+  }
+});
+
+// @desc    Update user profile
+// @route   PUT /auth/update
+// @access  Private
+exports.updateUser = asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
+  const user = await User.findById(req.user.id);
+
+  if (user) {
+    user.username = username || user.username;
     if (password) {
-      const hash = await bcrypt.hash(password, 10);
-      updateData.password = hash;
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
     }
 
-    await User.findByIdAndUpdate(req.user.id, updateData);
+    const updatedUser = await user.save();
 
-    return res.json({ message: "Updated successfully" });
-
-  } catch (err) {
-    return res.status(500).json({ message: "Update failed", error: err.message });
+    res.json({
+      message: "Updated successfully",
+      user: {
+        _id: updatedUser._id,
+        username: updatedUser.username
+      }
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
   }
+});
+
+// Generate JWT
+const generateToken = (id) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined in environment variables");
+  }
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "30d",
+  });
 };

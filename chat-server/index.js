@@ -4,55 +4,55 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const connectDB = require("./config/db");
+const { notFound, errorHandler } = require("./middleware/errorHandler");
+const { initializeSocket } = require("./socket");
+const aiService = require("./services/ai.service");
 
-// routes
+// Routes
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
 const chatRoutes = require("./routes/chat");
-const aiService = require("./services/ai.service");
+const aiRoutes = require("./routes/ai");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Basic middleware setup
+// Connect to Database
+connectDB().then(async () => {
+  await aiService.initializeGemini();
+});
+
+// Middleware
 app.use(cors({
-  origin: "*",
+  origin: "*", // TODO: Configure this for production
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 app.use(express.json());
 
-const MONGO_URL = process.env.MONGO_URL;
-const PORT = process.env.PORT || 3000;
-
-// Connect to MongoDB and initialize AI service
-mongoose.connect(MONGO_URL)
-  .then(async () => {
-    console.log("MongoDB connected");
-    await aiService.initializeGemini();
-  })
-  .catch(err => console.error(err));
-
-// Create HTTP + Socket.io server
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" },
-  pingTimeout: 60000,           // Disconnect inactive clients
-  connectionStateRecovery: {}   // Helps restore missed events
-});
-
-// Register API routes
+// Register API Routes
 app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
 app.use("/chat", chatRoutes);
-app.use("/ai", require("./routes/ai"));
+app.use("/ai", aiRoutes);
 
-const { initializeSocket } = require("./socket");
+// Error Handling Middleware
+app.use(notFound);
+app.use(errorHandler);
+
+// Create HTTP + Socket.io Server
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" },
+  pingTimeout: 60000,
+  connectionStateRecovery: {}
+});
 
 // Attach socket event handlers
 initializeSocket(io);
 
-// Start server
+// Start Server
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

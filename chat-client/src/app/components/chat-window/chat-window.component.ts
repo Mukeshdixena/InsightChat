@@ -7,11 +7,12 @@ import { MessageService } from '../../services/message.service';
 import { Message, Chat, User } from '../../shared/models';
 import { getChatName, isMyMessage, getMessageStatus, hasUserReacted, getReactionCount, filterUnreadMessageIds, getReplyMessage, getSenderName, getMessageContent } from '../../shared/utils/chat.utils';
 import { scrollToBottom, copyToClipboard } from '../../shared/utils/dom.utils';
+import { TruncatePipe } from '../pipes/truncate.pipe';
 
 @Component({
     selector: 'app-chat-window',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TruncatePipe],
     templateUrl: './chat-window.component.html',
     styleUrls: ['./chat-window.component.css']
 })

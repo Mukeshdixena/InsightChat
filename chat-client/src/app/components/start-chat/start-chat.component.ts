@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { api } from '../../config/api';
+import { TruncatePipe } from '../pipes/truncate.pipe';
 
 @Component({
     selector: 'app-start-chat',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, TruncatePipe],
     templateUrl: './start-chat.component.html',
     styleUrls: ['./start-chat.component.css']
 })

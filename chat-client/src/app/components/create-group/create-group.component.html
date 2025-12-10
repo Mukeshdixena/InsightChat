@@ -36,7 +36,7 @@
         <div *ngFor="let user of searchResults" (click)="addUser(user)" class="user-item">
             <div class="avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
             <div class="user-info">
-                <span class="username">{{ user.username }}</span>
+                <span class="username">{{ user.username | truncate:25 }}</span>
                 <span style="font-size: 11px; color: gray; margin-left: 5px;">({{ user.email || 'User' }})</span>
             </div>
         </div>
