@@ -5,7 +5,7 @@ import { SocketService } from '../../services/socket.service';
 import { AuthService } from '../../services/auth.service';
 import { MessageService } from '../../services/message.service';
 import { Message, Chat, User } from '../../shared/models';
-import { getChatName, isMyMessage, getMessageStatus, hasUserReacted, getReactionCount, filterUnreadMessageIds, getReplyMessage, getSenderName, getMessageContent } from '../../shared/utils/chat.utils';
+import { getChatName, isMyMessage, getMessageStatus, hasUserReacted, getReactionCount, filterUnreadMessageIds, getSenderName, getMessageContent } from '../../shared/utils/chat.utils';
 import { scrollToBottom, copyToClipboard } from '../../shared/utils/dom.utils';
 import { TruncatePipe } from '../pipes/truncate.pipe';
 
@@ -26,7 +26,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked,
     isTyping: boolean = false;
     typingUserName: string = '';
 
-    replyingTo: Message | null = null;
+
     editingMessage: Message | null = null;
 
     showReactionPicker: { [key: string]: boolean } = {};
@@ -216,9 +216,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked,
         this.socketService.stopTyping(this.chat._id);
         this.typing = false;
 
-        const replyToId = this.replyingTo ? this.replyingTo._id : undefined;
-
-        this.messageService.sendMessage(this.newMessage, this.chat._id, this.currentUser._id, replyToId).subscribe({
+        this.messageService.sendMessage(this.newMessage, this.chat._id, this.currentUser._id, undefined).subscribe({
             next: (data: Message | Message[]) => {
                 // Handle case where backend might return array (though service expects single)
                 // Assuming service implementation returns single message as per creating
@@ -229,9 +227,6 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked,
                     this.messages.push(data);
                 }
                 this.newMessage = "";
-                this.replyingTo = null;
-                this.newMessage = "";
-                this.replyingTo = null;
                 setTimeout(() => scrollToBottom(this.scrollContainer), 0);
             },
             error: (err) => console.error("Failed to send message", err)
@@ -267,9 +262,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked,
         return getMessageStatus(msg, this.currentUser._id);
     }
 
-    getReplyMessage(msg: Message): Message | undefined {
-        return getReplyMessage(msg);
-    }
+
 
     getSenderName(msg: Message | undefined | null): string {
         return getSenderName(msg);
@@ -326,21 +319,14 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked,
         return getReactionCount(message, emoji);
     }
 
-    replyToMessage(message: Message) {
-        this.replyingTo = message;
-        this.editingMessage = null;
-    }
 
-    cancelReply() {
-        this.replyingTo = null;
-    }
 
     startEdit(message: Message) {
         if (!this.isMyMessage(message) || message.isDeleted) return;
 
         this.editingMessage = message;
+        this.editingMessage = message;
         this.newMessage = message.content;
-        this.replyingTo = null;
     }
 
     saveEdit() {

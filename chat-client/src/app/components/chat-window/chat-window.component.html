@@ -16,7 +16,7 @@
             </div>
             <div class="modal-body">
                 <div class="large-avatar">{{ getChatName().charAt(0) }}</div>
-                <h2 class="modal-chat-name">{{ getChatName() }}</h2>
+                <h2 class="modal-chat-name">{{ getChatName() | truncate:20 }}</h2>
 
                 <div class="members-section" *ngIf="chat.isGroupChat">
                     <h4>Members ({{ chat.users.length }})</h4>
@@ -24,7 +24,7 @@
                         <div class="member-item" *ngFor="let user of chat.users">
                             <div class="member-avatar">{{ user.username.charAt(0) }}</div>
                             <div class="member-info">
-                                <span class="member-name">{{ user.username }}</span>
+                                <span class="member-name">{{ user.username | truncate:20}}</span>
                                 <span class="member-badge" *ngIf="user._id === currentUser._id">(You)</span>
                             </div>
                         </div>
@@ -37,10 +37,7 @@
     <!-- Messages Area -->
     <div class="messages-container" #scrollContainer>
         <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
-            <div class="reply-preview" *ngIf="getReplyMessage(msg)">
-                <strong>{{ getSenderName(getReplyMessage(msg)) }}</strong>
-                <p>{{ getMessageContent(getReplyMessage(msg)) | truncate:60 }}</p>
-            </div>
+
 
             <div class="message-content" *ngIf="!msg.isDeleted">
                 <div class="message-sender-name" *ngIf="chat.isGroupChat && !isMyMessage(msg)">
@@ -67,10 +64,7 @@
                         <span class="menu-icon">😊</span>
                         <span class="menu-label">React</span>
                     </div>
-                    <div class="menu-item" (click)="replyToMessage(msg); toggleMessageMenu(msg._id)">
-                        <span class="menu-icon">↩️</span>
-                        <span class="menu-label">Reply</span>
-                    </div>
+
                     <div class="menu-item" (click)="copyMessage(msg); toggleMessageMenu(msg._id)">
                         <span class="menu-icon">📋</span>
                         <span class="menu-label">Copy</span>
@@ -144,13 +138,7 @@
     </div>
 
     <div class="footer">
-        <div class="reply-preview-input" *ngIf="replyingTo">
-            <div class="reply-info">
-                <span>Replying to <strong>{{ getSenderName(replyingTo) }}</strong></span>
-                <p>{{ getMessageContent(replyingTo) | truncate:60 }}</p>
-            </div>
-            <button class="cancel-btn" (click)="cancelReply()">✕</button>
-        </div>
+
 
         <div class="edit-mode-indicator" *ngIf="editingMessage">
             <span>Editing message</span>
