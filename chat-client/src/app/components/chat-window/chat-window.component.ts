@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewChecked, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewChecked, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SocketService } from '../../services/socket.service';
@@ -132,6 +132,23 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked,
 
     ngOnDestroy() {
         this.socketService.clearActiveChat();
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        // Check if click is inside the menu or the trigger
+        const isMenuClick = target.closest('.message-actions-menu');
+        const isTriggerClick = target.closest('.message-menu-trigger');
+
+        if (!isMenuClick && !isTriggerClick) {
+            this.showMessageMenu = {}; // Close all menus
+        }
+
+        const isReactionPickerClick = target.closest('.reaction-picker');
+        if (!isReactionPickerClick) {
+            this.showReactionPicker = {};
+        }
     }
 
     ngAfterViewChecked() {

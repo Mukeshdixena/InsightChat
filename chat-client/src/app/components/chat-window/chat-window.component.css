@@ -523,7 +523,8 @@ body.dark-theme .message.sent .message-content {
 .reaction-picker {
     position: absolute;
     top: -40px;
-    right: 0;
+    left: 0;
+    /* Default to left for received messages */
     background: white;
     border-radius: 20px;
     padding: 8px 12px;
@@ -531,6 +532,11 @@ body.dark-theme .message.sent .message-content {
     display: flex;
     gap: 8px;
     z-index: 10;
+}
+
+.message.sent .reaction-picker {
+    left: auto;
+    right: 0;
 }
 
 .emoji-option {

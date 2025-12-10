@@ -60,7 +60,8 @@
                 </div>
 
                 <div class="message-actions-menu" *ngIf="showMessageMenu[msg._id] && !msg.isDeleted">
-                    <div class="menu-item" (click)="toggleReactionPicker(msg._id); toggleMessageMenu(msg._id)">
+                    <div class="menu-item"
+                        (click)="$event.stopPropagation(); toggleReactionPicker(msg._id); toggleMessageMenu(msg._id)">
                         <span class="menu-icon">😊</span>
                         <span class="menu-label">React</span>
                     </div>
