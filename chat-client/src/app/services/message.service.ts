@@ -1,18 +1,20 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Message } from '../shared/models';
+import { api } from '../config/api';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MessageService {
-    private apiUrl = 'http://localhost:3000/messages';
 
-    constructor(private http: HttpClient) { }
+    constructor() { }
 
     getMessages(chatId: string): Observable<Message[]> {
-        return this.http.get<Message[]>(`${this.apiUrl}/${chatId}`);
+        return from(api.get(`/messages/${chatId}`)).pipe(
+            map(response => response.data)
+        );
     }
 
     sendMessage(content: string, chatId: string, userId: string, replyToId?: string): Observable<Message> {
@@ -20,18 +22,27 @@ export class MessageService {
         if (replyToId) {
             body.replyTo = replyToId;
         }
-        return this.http.post<Message>(this.apiUrl, body);
+        return from(api.post('/messages', body)).pipe(
+            map(response => response.data)
+        );
     }
 
     addReaction(messageId: string, emoji: string, userId: string): Observable<Message> {
-        return this.http.post<Message>(`${this.apiUrl}/${messageId}/reaction`, { emoji, userId });
+        return from(api.post(`/messages/${messageId}/reaction`, { emoji, userId })).pipe(
+            map(response => response.data)
+        );
     }
 
     editMessage(messageId: string, content: string, userId: string): Observable<Message> {
-        return this.http.put<Message>(`${this.apiUrl}/${messageId}`, { content, userId });
+        return from(api.put(`/messages/${messageId}`, { content, userId })).pipe(
+            map(response => response.data)
+        );
     }
 
     deleteMessage(messageId: string, userId: string): Observable<any> {
-        return this.http.delete(`${this.apiUrl}/${messageId}`, { body: { userId } });
+        // Axios delete config for body is different than Angular's
+        return from(api.delete(`/messages/${messageId}`, { data: { userId } })).pipe(
+            map(response => response.data)
+        );
     }
 }

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { api } from '../../config/api';
 
 @Component({
     selector: 'app-start-chat',
@@ -20,7 +20,7 @@ export class StartChatComponent implements OnInit {
     filteredUsers: any[] = [];
     currentUser: any;
 
-    constructor(private http: HttpClient, private authService: AuthService) {
+    constructor(private authService: AuthService) {
         this.currentUser = this.authService.getCurrentUser();
     }
 
@@ -29,13 +29,10 @@ export class StartChatComponent implements OnInit {
     }
 
     fetchAllUsers() {
-        this.http.get('http://localhost:3000/auth/users').subscribe({
-            next: (data: any) => {
-                this.allUsers = data;
-                this.filterUsers();
-            },
-            error: (err) => console.error("Failed to fetch users", err)
-        });
+        api.get('/auth/users').then((res) => {
+            this.allUsers = res.data;
+            this.filterUsers();
+        }).catch((err) => console.error("Failed to fetch users", err));
     }
 
     searchUsers() {

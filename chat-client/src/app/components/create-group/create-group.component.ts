@@ -1,9 +1,9 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../services/toast.service';
+import { api } from '../../config/api';
 
 @Component({
     selector: 'app-create-group',
@@ -22,7 +22,7 @@ export class CreateGroupComponent implements OnInit {
     selectedUsers: any[] = [];
     currentUser: any;
 
-    constructor(private http: HttpClient, private authService: AuthService, private toastService: ToastService) {
+    constructor(private authService: AuthService, private toastService: ToastService) {
         this.currentUser = this.authService.getCurrentUser();
     }
 
@@ -35,16 +35,13 @@ export class CreateGroupComponent implements OnInit {
     }
 
     fetchAllUsers() {
-        this.http.get('http://localhost:3000/auth/users').subscribe({
-            next: (data: any) => {
-                // console.log("Fetched users:", data);
-                this.allUsers = data;
-                this.filterUsers();
-            },
-            error: (err) => {
-                console.error("Failed to fetch users", err);
-                alert("Could not load users. Check connection.");
-            }
+        api.get('/auth/users').then((res) => {
+            const data = res.data;
+            this.allUsers = data;
+            this.filterUsers();
+        }).catch((err) => {
+            console.error("Failed to fetch users", err);
+            alert("Could not load users. Check connection.");
         });
     }
 
@@ -96,15 +93,14 @@ export class CreateGroupComponent implements OnInit {
             adminId: this.currentUser._id
         };
 
-        this.http.post('http://localhost:3000/chat/group', payload)
-            .subscribe({
-                next: (data: any) => {
-                    this.groupCreated.emit(data);
-                },
-                error: (err) => {
-                    console.error("Failed to create group", err);
-                    alert("Failed to create group: " + (err.error || err.message));
-                }
+        api.post('/chat/group', payload)
+            .then((res) => {
+                const data = res.data;
+                this.groupCreated.emit(data);
+            })
+            .catch((err) => {
+                console.error("Failed to create group", err);
+                alert("Failed to create group: " + (err.response?.data?.error || err.message));
             });
     }
 

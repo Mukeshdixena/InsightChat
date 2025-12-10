@@ -6,15 +6,40 @@ export const api = axios.create({
   timeout: 10000
 });
 
-api.interceptors.request.use((config) => {
-  const token = AppConfig.getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Request Interceptor: Attach Token
+api.interceptors.request.use(
+  (config) => {
+    const token = AppConfig.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
+// Response Interceptor: Error Handling
 api.interceptors.response.use(
-  (res) => res,
-  (err) => Promise.reject(err)
+  (response) => response,
+  (error) => {
+    // Log error for debugging
+    console.error('API Error:', error.response ? error.response.data : error.message);
+
+    // Handle 401 Unauthorized globally
+    if (error.response && error.response.status === 401) {
+      // Clear auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      localStorage.removeItem('userId');
+
+      // Redirect to login if not already there
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
 );

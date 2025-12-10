@@ -1,13 +1,13 @@
 import { Component, EventEmitter, OnInit, Output, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 import { CreateGroupComponent } from '../create-group/create-group.component';
 import { StartChatComponent } from '../start-chat/start-chat.component';
 import { ProfileDrawerComponent } from '../profile-drawer/profile-drawer.component';
 import { TruncatePipe } from '../pipes/truncate.pipe';
+import { api } from '../../config/api';
 
 @Component({
     selector: 'app-chat-list',
@@ -26,7 +26,6 @@ export class ChatListComponent implements OnInit {
     showProfileDrawer = false;
 
     constructor(
-        private http: HttpClient,
         private authService: AuthService,
         private socketService: SocketService
     ) {
@@ -65,18 +64,16 @@ export class ChatListComponent implements OnInit {
             return;
         }
 
-        this.http.get(`http://localhost:3000/chat/${this.currentUser._id}`).subscribe({
-            next: (data: any) => {
-                // Filter out AI Bot chats
-                this.chats = data.filter((c: any) => {
-                    if (c.isGroupChat) return true;
-                    // Check if other user is AI Bot (assuming 'AI Bot' username or similar)
-                    const otherUser = c.users.find((u: any) => u._id !== this.currentUser._id);
-                    return otherUser && otherUser.username !== 'AI Bot';
-                });
-            },
-            error: (err) => console.error("Failed to fetch chats", err)
-        });
+        api.get(`/chat/${this.currentUser._id}`).then((res) => {
+            const data = res.data;
+            // Filter out AI Bot chats
+            this.chats = data.filter((c: any) => {
+                if (c.isGroupChat) return true;
+                // Check if other user is AI Bot (assuming 'AI Bot' username or similar)
+                const otherUser = c.users.find((u: any) => u._id !== this.currentUser._id);
+                return otherUser && otherUser.username !== 'AI Bot';
+            });
+        }).catch(err => console.error("Failed to fetch chats", err));
     }
 
     searchText: string = '';
@@ -137,17 +134,15 @@ export class ChatListComponent implements OnInit {
     }
 
     createChat(userId: string) {
-        this.http.post('http://localhost:3000/chat', {
+        api.post('/chat', {
             userId: this.currentUser._id,
             otherUserId: userId
-        }).subscribe({
-            next: (chat: any) => {
-                if (!this.chats.find(c => c._id === chat._id)) {
-                    this.chats.unshift(chat);
-                }
-                this.chatSelected.emit(chat);
-            },
-            error: (err) => console.error("Failed to create chat", err)
-        });
+        }).then((res) => {
+            const chat = res.data;
+            if (!this.chats.find(c => c._id === chat._id)) {
+                this.chats.unshift(chat);
+            }
+            this.chatSelected.emit(chat);
+        }).catch(err => console.error("Failed to create chat", err));
     }
 }
