@@ -6,8 +6,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
-// Models & routes
-const User = require("./models/user");
+// routes
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
 const chatRoutes = require("./routes/chat");
