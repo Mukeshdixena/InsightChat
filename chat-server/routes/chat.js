@@ -1,9 +1,12 @@
+// Chat routes for creating chats, fetching user chats, and managing group chats
+
 const express = require("express");
 const router = express.Router();
 const Chat = require("../models/chat");
 const User = require("../models/user");
 const Message = require("../models/message");
 
+// Create or fetch one-to-one chat
 router.post("/", async (req, res) => {
     const { userId, otherUserId } = req.body;
 
@@ -11,6 +14,7 @@ router.post("/", async (req, res) => {
         return res.status(400).send("UserId and OtherUserId param sent");
     }
 
+    // Check if chat already exists
     var isChat = await Chat.find({
         isGroupChat: false,
         $and: [
@@ -29,6 +33,7 @@ router.post("/", async (req, res) => {
     if (isChat.length > 0) {
         res.send(isChat[0]);
     } else {
+        // Create new chat
         var chatData = {
             chatName: "sender",
             isGroupChat: false,
@@ -37,10 +42,9 @@ router.post("/", async (req, res) => {
 
         try {
             const createdChat = await Chat.create(chatData);
-            const FullChat = await Chat.findOne({ _id: createdChat._id }).populate(
-                "users",
-                "-password"
-            );
+            const FullChat = await Chat.findOne({ _id: createdChat._id })
+                .populate("users", "-password");
+
             res.status(200).json(FullChat);
         } catch (error) {
             res.status(400).json(error.message);
@@ -48,8 +52,7 @@ router.post("/", async (req, res) => {
     }
 });
 
-
-
+// Fetch all chats for a user
 router.get("/:userId", async (req, res) => {
     try {
         Chat.find({ users: { $elemMatch: { $eq: req.params.userId } } })
@@ -63,12 +66,12 @@ router.get("/:userId", async (req, res) => {
                     select: "username",
                 });
 
-                // Calculate unread counts
+                // Add unread message count
                 const chatsWithUnread = await Promise.all(results.map(async (chat) => {
                     const unreadCount = await Message.countDocuments({
                         chat: chat._id,
-                        sender: { $ne: req.params.userId }, // Not sent by me
-                        readBy: { $ne: req.params.userId }  // Not read by me
+                        sender: { $ne: req.params.userId },
+                        readBy: { $ne: req.params.userId }
                     });
                     return { ...chat._doc, unreadCount };
                 }));
@@ -80,6 +83,7 @@ router.get("/:userId", async (req, res) => {
     }
 });
 
+// Create a group chat
 router.post("/group", async (req, res) => {
     if (!req.body.users || !req.body.name || !req.body.adminId) {
         return res.status(400).send({ message: "Please Fill all the fields" });
@@ -111,6 +115,7 @@ router.post("/group", async (req, res) => {
     }
 });
 
+// Rename group
 router.put("/rename", async (req, res) => {
     const { chatId, chatName } = req.body;
 
@@ -130,6 +135,7 @@ router.put("/rename", async (req, res) => {
     }
 });
 
+// Add user to group
 router.put("/groupadd", async (req, res) => {
     const { chatId, userId } = req.body;
 
@@ -149,6 +155,7 @@ router.put("/groupadd", async (req, res) => {
     }
 });
 
+// Remove user from group
 router.put("/groupremove", async (req, res) => {
     const { chatId, userId } = req.body;
 

@@ -1,3 +1,5 @@
+// Handles Gemini AI setup, bot identity, and text generation helpers
+
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const User = require("../models/user");
 
@@ -5,6 +7,7 @@ let genAI;
 let model;
 let aiBotId = null;
 
+// Initialize Gemini model and ensure AI Bot user exists
 const initializeGemini = async () => {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (GEMINI_API_KEY) {
@@ -16,6 +19,7 @@ const initializeGemini = async () => {
     }
 
     try {
+        // Create AI Bot user if not already present
         let bot = await User.findOne({ username: "AI Bot" });
         if (!bot) {
             const hashedPassword = "ai_bot_secure_password_placeholder";
@@ -32,10 +36,9 @@ const initializeGemini = async () => {
     }
 };
 
-const getAiBotId = () => {
-    return aiBotId;
-};
+const getAiBotId = () => aiBotId;
 
+// Generate chat response for the AI bot
 const generateResponse = async (prompt, senderName) => {
     if (!model) return null;
     try {
@@ -48,6 +51,7 @@ const generateResponse = async (prompt, senderName) => {
     }
 };
 
+// Rewrite text in a selected tone/style
 const rewriteText = async (text, style) => {
     if (!model) return null;
     try {
@@ -74,6 +78,7 @@ const rewriteText = async (text, style) => {
     }
 };
 
+// Generate multiple rewrite styles (grammar, casual, formal, + optional custom)
 const generateRewriteSuggestions = async (text, customPrompt) => {
     if (!model) return null;
     try {

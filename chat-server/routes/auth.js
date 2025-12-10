@@ -1,3 +1,5 @@
+// Auth routes for user signup, login, search, and profile updates
+
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
@@ -5,17 +7,17 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const auth = require("../middleware/auth");
 
+// Search users by username
 router.get("/users", async (req, res) => {
   const keyword = req.query.search
-    ? {
-      username: { $regex: req.query.search, $options: "i" },
-    }
+    ? { username: { $regex: req.query.search, $options: "i" } }
     : {};
 
   const users = await User.find(keyword);
   res.send(users);
 });
 
+// User signup
 router.post("/signup", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -31,6 +33,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// User login
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -47,6 +50,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Update username or password
 router.put("/update", auth, async (req, res) => {
   try {
     const { username, password } = req.body;

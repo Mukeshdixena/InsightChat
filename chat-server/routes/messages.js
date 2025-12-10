@@ -1,9 +1,12 @@
+// Message routes: fetching, sending, editing, deleting, reactions, and AI auto-replies
+
 const express = require("express");
 const router = express.Router();
 const Message = require("../models/message");
 const User = require("../models/user");
 const Chat = require("../models/chat");
 
+// Fetch all messages for a chat
 router.get("/:chatId", async (req, res) => {
   try {
     const messages = await Message.find({ chat: req.params.chatId })
@@ -19,6 +22,7 @@ router.get("/:chatId", async (req, res) => {
   }
 });
 
+// Send new message (includes AI bot reply if applicable)
 router.post("/", async (req, res) => {
   const { content, chatId, userId } = req.body;
 
@@ -29,7 +33,7 @@ router.post("/", async (req, res) => {
 
   var newMessage = {
     sender: userId,
-    content: content,
+    content,
     chat: chatId,
     status: 'sent',
     deliveredTo: [],
@@ -46,8 +50,9 @@ router.post("/", async (req, res) => {
       select: "username",
     });
 
-    await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message });
+    await Chat.findByIdAndUpdate(chatId, { latestMessage: message });
 
+    // Optional AI bot auto-response
     const aiService = require("../services/ai.service");
     const aiBotId = aiService.getAiBotId();
     let aiResponseGenerated = false;
@@ -58,10 +63,8 @@ router.post("/", async (req, res) => {
 
       if (isAiChat && !isSenderBot) {
         try {
-          const prompt = content;
           const senderName = message.sender.username || "User";
-
-          const responseText = await aiService.generateResponse(prompt, senderName);
+          const responseText = await aiService.generateResponse(content, senderName);
 
           if (responseText) {
             const botMessage = await Message.create({
@@ -82,11 +85,12 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // Return updated messages when AI replies
     if (aiResponseGenerated) {
-      // Return full history so frontend shows both messages instantly
       const fullMessages = await Message.find({ chat: chatId })
         .populate("sender", "username")
         .populate("chat");
+
       res.json(fullMessages);
     } else {
       res.json(message);
@@ -97,6 +101,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Add or remove reaction on a message
 router.post("/:messageId/reaction", async (req, res) => {
   try {
     const { emoji, userId } = req.body;
@@ -127,6 +132,7 @@ router.post("/:messageId/reaction", async (req, res) => {
   }
 });
 
+// Edit message
 router.put("/:messageId", async (req, res) => {
   try {
     const { content, userId } = req.body;
@@ -149,6 +155,7 @@ router.put("/:messageId", async (req, res) => {
   }
 });
 
+// Soft-delete message
 router.delete("/:messageId", async (req, res) => {
   try {
     const { userId } = req.body;
@@ -162,7 +169,7 @@ router.delete("/:messageId", async (req, res) => {
 
     message.isDeleted = true;
     message.deletedAt = new Date();
-    message.content = ""; // Clear content for privacy
+    message.content = "";
 
     await message.save();
     res.json(message);
@@ -171,6 +178,7 @@ router.delete("/:messageId", async (req, res) => {
   }
 });
 
+// Clear all messages in a chat
 router.delete("/chat/:chatId", async (req, res) => {
   try {
     await Message.deleteMany({ chat: req.params.chatId });

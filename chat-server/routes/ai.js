@@ -1,7 +1,10 @@
+// Route for rewriting text using Gemini AI
+
 const express = require("express");
 const router = express.Router();
 const aiService = require("../services/ai.service");
 
+// Handle rewrite requests
 router.post("/rewrite", async (req, res) => {
     const { text, style } = req.body;
 
