@@ -1,73 +1,21 @@
-// Auth routes for user signup, login, search, and profile updates
+// routes/authRoutes.js
 
 const express = require("express");
 const router = express.Router();
-const User = require("../models/user");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+
 const auth = require("../middleware/auth");
+const authController = require("../controllers/authController");
 
-// Search users by username
-router.get("/users", async (req, res) => {
-  const keyword = req.query.search
-    ? { username: { $regex: req.query.search, $options: "i" } }
-    : {};
+// Search users
+router.get("/users", authController.searchUsers);
 
-  const users = await User.find(keyword);
-  res.send(users);
-});
+// Signup
+router.post("/signup", authController.signup);
 
-// User signup
-router.post("/signup", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const exist = await User.findOne({ username });
-    if (exist) return res.status(400).json({ message: "User exists" });
+// Login
+router.post("/login", authController.login);
 
-    const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ username, password: hash });
-
-    res.json({ message: "Signup successful", userId: user._id });
-  } catch (err) {
-    res.status(500).json({ message: "Error", error: err.message });
-  }
-});
-
-// User login
-router.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ message: "Invalid" });
-
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(400).json({ message: "Invalid" });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "secret");
-    res.json({ token, userId: user._id });
-  } catch (err) {
-    res.status(500).json({ message: "Error", error: err.message });
-  }
-});
-
-// Update username or password
-router.put("/update", auth, async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    const updateData = {};
-    if (username) updateData.username = username;
-    if (password) {
-      const hash = await bcrypt.hash(password, 10);
-      updateData.password = hash;
-    }
-
-    await User.findByIdAndUpdate(req.user.id, updateData);
-    res.json({ message: "Updated successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: "Update failed" });
-  }
-});
+// Update user
+router.put("/update", auth, authController.updateUser);
 
 module.exports = router;
