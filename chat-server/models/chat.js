@@ -8,4 +8,7 @@ const chatSchema = new mongoose.Schema({
     groupAdmin: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 
+// Index for fetching chats by user (most common query)
+chatSchema.index({ users: 1 });
+
 module.exports = mongoose.model("Chat", chatSchema);

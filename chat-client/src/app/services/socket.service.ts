@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
+import { SOCKET_EVENTS } from '../shared/constants';
 
 export interface ChatMessage {
   from: string;
@@ -21,10 +22,17 @@ export class SocketService implements OnDestroy {
     this.initializeSocket();
   }
 
+  /**
+   * Sets the currently active chat ID to suppress notifications
+   * @param chatId - The ID of the active chat
+   */
   setActiveChat(chatId: string) {
     this.activeChatId.next(chatId);
   }
 
+  /**
+   * Clears the active chat ID
+   */
   clearActiveChat() {
     this.activeChatId.next(null);
   }
@@ -54,52 +62,58 @@ export class SocketService implements OnDestroy {
   }
 
   // -------------------------
-  // SEND MESSAGE
-  // -------------------------
-  // -------------------------
   // SOCKET EVENTS
   // -------------------------
+
+  // Initialize the user's connection on the server
   setup(user: any) {
-    this.socket.emit("setup", user);
+    this.socket.emit(SOCKET_EVENTS.SETUP, user);
   }
 
+  // Joins a specific chat room to start receiving messages
   joinChat(chatId: string) {
-    this.socket.emit("join chat", chatId);
+    this.socket.emit(SOCKET_EVENTS.JOIN_CHAT, chatId);
   }
 
+  // Notifies the room that this user is typing...
   sendTyping(chatId: string) {
-    this.socket.emit("typing", chatId);
+    this.socket.emit(SOCKET_EVENTS.TYPING, chatId);
   }
 
+  // Tells the room that the user stopped typing
   stopTyping(chatId: string) {
-    this.socket.emit("stop typing", chatId);
+    this.socket.emit(SOCKET_EVENTS.STOP_TYPING, chatId);
   }
 
   // -------------------------
   // SEND MESSAGE
   // -------------------------
+
+  // Fires off a new message to the server
   sendMessage(message: any) {
-    this.socket.emit("new message", message);
+    this.socket.emit(SOCKET_EVENTS.MESSAGE.NEW, message);
   }
 
   // -------------------------
   // MESSAGE STATUS EVENTS
   // -------------------------
+
   emitMessageDelivered(messageId: string, userId: string) {
-    this.socket.emit("message delivered", { messageId, userId });
+    this.socket.emit(SOCKET_EVENTS.MESSAGE.DELIVERED, { messageId, userId });
   }
 
   emitMessageRead(messageId: string, userId: string) {
-    this.socket.emit("message read", { messageId, userId });
+    this.socket.emit(SOCKET_EVENTS.MESSAGE.READ, { messageId, userId });
   }
 
   emitMessagesRead(messageIds: string[], userId: string) {
-    this.socket.emit("messages read", { messageIds, userId });
+    this.socket.emit(SOCKET_EVENTS.MESSAGE.BATCH_READ, { messageIds, userId });
   }
 
+  // Listen for updates on delivery or read status
   onMessageStatusUpdate(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("message status updated", (data) => {
+      this.socket.on(SOCKET_EVENTS.MESSAGE.STATUS_UPDATED, (data) => {
         observer.next(data);
       });
     });
@@ -108,78 +122,86 @@ export class SocketService implements OnDestroy {
   // -------------------------
   // RECEIVE MESSAGES
   // -------------------------
+
+  // Subscribe to incoming messages from the server
   messageReceived(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("message received", (newMessageRecieved) => {
+      this.socket.on(SOCKET_EVENTS.MESSAGE.RECEIVED, (newMessageRecieved) => {
         observer.next(newMessageRecieved);
       });
     });
   }
 
+  // Watch for typing indicators
   typing(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("typing", () => observer.next(null));
+      this.socket.on(SOCKET_EVENTS.TYPING, () => observer.next(null));
     });
   }
 
+  // Watch for when typing stops
   stopTypingListener(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("stop typing", () => observer.next(null));
+      this.socket.on(SOCKET_EVENTS.STOP_TYPING, () => observer.next(null));
     });
   }
 
   // -------------------------
   // AI EVENTS
   // -------------------------
+
   requestRewrite(text: string, customPrompt?: string) {
-    this.socket.emit("request rewrite", { text, customPrompt });
+    this.socket.emit(SOCKET_EVENTS.AI.REQUEST_REWRITE, { text, customPrompt });
   }
 
   onRewriteSuggestions(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("rewrite suggestions", (data) => observer.next(data));
+      this.socket.on(SOCKET_EVENTS.AI.REWRITE_SUGGESTIONS, (data) => observer.next(data));
     });
   }
 
   // -------------------------
   // REACTION EVENTS
   // -------------------------
+
   emitReaction(messageId: string, emoji: string, userId: string, chatId: string) {
-    this.socket.emit("reaction added", { messageId, emoji, userId, chatId });
+    this.socket.emit(SOCKET_EVENTS.REACTION.ADDED, { messageId, emoji, userId, chatId });
   }
 
   onReactionUpdate(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("reaction updated", (data) => observer.next(data));
+      this.socket.on(SOCKET_EVENTS.REACTION.UPDATED, (data) => observer.next(data));
     });
   }
 
   // -------------------------
   // MESSAGE EDIT/DELETE EVENTS
   // -------------------------
+
   emitMessageEdit(messageId: string, content: string, chatId: string) {
-    this.socket.emit("message edited", { messageId, content, chatId });
+    this.socket.emit(SOCKET_EVENTS.MESSAGE.EDITED, { messageId, content, chatId });
   }
 
   emitMessageDelete(messageId: string, chatId: string) {
-    this.socket.emit("message deleted", { messageId, chatId });
+    this.socket.emit(SOCKET_EVENTS.MESSAGE.DELETED, { messageId, chatId });
   }
 
   onMessageUpdate(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("message updated", (data) => observer.next(data));
+      this.socket.on(SOCKET_EVENTS.MESSAGE.UPDATED, (data) => observer.next(data));
     });
   }
 
   onMessageRemove(): Observable<any> {
     return new Observable(observer => {
-      this.socket.on("message removed", (data) => observer.next(data));
+      this.socket.on(SOCKET_EVENTS.MESSAGE.REMOVED, (data) => observer.next(data));
     });
   }
 
   // -------------------------
   // CLEANUP
   // -------------------------
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
