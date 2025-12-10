@@ -37,7 +37,7 @@ export class CreateGroupComponent implements OnInit {
     fetchAllUsers() {
         this.http.get('http://localhost:3000/auth/users').subscribe({
             next: (data: any) => {
-                console.log("Fetched users:", data);
+                // console.log("Fetched users:", data);
                 this.allUsers = data;
                 this.filterUsers();
             },

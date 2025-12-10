@@ -7,7 +7,7 @@ const MONGO_URL = process.env.MONGO_URL;
 async function updateExistingMessages() {
     try {
         await mongoose.connect(MONGO_URL);
-        console.log("MongoDB connected");
+        // console.log("MongoDB connected");
 
         const result = await Message.updateMany(
             { status: { $exists: false } },
@@ -20,10 +20,10 @@ async function updateExistingMessages() {
             }
         );
 
-        console.log(`Updated ${result.modifiedCount} messages with status field`);
+        // console.log(`Updated ${result.modifiedCount} messages with status field`);
 
         await mongoose.connection.close();
-        console.log("Migration complete!");
+        // console.log("Migration complete!");
     } catch (error) {
         console.error("Migration failed:", error);
         process.exit(1);

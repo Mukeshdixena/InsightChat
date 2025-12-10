@@ -13,7 +13,7 @@ export async function copyToClipboard(text: string): Promise<void> {
     if (!text) return;
     try {
         await navigator.clipboard.writeText(text);
-        console.log('Text copied to clipboard');
+        // console.log('Text copied to clipboard');
     } catch (err) {
         console.error('Failed to copy text: ', err);
     }

@@ -7,11 +7,12 @@ import { SocketService } from '../../services/socket.service';
 import { CreateGroupComponent } from '../create-group/create-group.component';
 import { StartChatComponent } from '../start-chat/start-chat.component';
 import { ProfileDrawerComponent } from '../profile-drawer/profile-drawer.component';
+import { TruncatePipe } from '../pipes/truncate.pipe';
 
 @Component({
     selector: 'app-chat-list',
     standalone: true,
-    imports: [CommonModule, CreateGroupComponent, StartChatComponent, ProfileDrawerComponent, FormsModule],
+    imports: [CommonModule, CreateGroupComponent, StartChatComponent, ProfileDrawerComponent, FormsModule, TruncatePipe],
     templateUrl: './chat-list.component.html',
     styleUrls: ['./chat-list.component.css']
 })

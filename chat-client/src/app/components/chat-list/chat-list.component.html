@@ -34,12 +34,18 @@
             <div class="avatar">{{ getChatName(chat).charAt(0).toUpperCase() }}</div>
             <div class="chat-info">
                 <div class="chat-header">
-                    <div class="chat-name">{{ getChatName(chat) }}</div>
-                    <span class="badge" *ngIf="chat.unreadCount && chat.unreadCount > 0">{{ chat.unreadCount }}</span>
+                    <div class="chat-name">
+                        {{ getChatName(chat) | truncate:20 }}
+                    </div>
+                    <span class="badge" *ngIf="chat.unreadCount > 0">
+                        {{ chat.unreadCount }}
+                    </span>
                 </div>
+
                 <div class="last-message">
-                    {{ chat.latestMessage?.content || "No messages yet" }}
+                    {{ chat.latestMessage?.content | truncate:30 }}
                 </div>
+
             </div>
         </div>
     </div>

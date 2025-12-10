@@ -48,7 +48,7 @@ export class SocketService implements OnDestroy {
 
     this.socket.on('connect', () => {
       this.isConnected = true;
-      console.log('Connected to WebSocket server:', this.socket.id);
+      // console.log('Connected to WebSocket server:', this.socket.id);
     });
 
     this.socket.on('disconnect', () => {
