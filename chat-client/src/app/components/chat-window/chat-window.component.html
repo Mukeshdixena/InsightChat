@@ -37,14 +37,14 @@
     <!-- Messages Area -->
     <div class="messages-container" #scrollContainer>
         <div *ngFor="let msg of messages" class="message" [class.sent]="isMyMessage(msg)">
-            <div class="reply-preview" *ngIf="msg.replyTo">
-                <strong>{{ msg.replyTo.sender?.username || 'User' }}</strong>
-                <p>{{ msg.replyTo.content }}</p>
+            <div class="reply-preview" *ngIf="getReplyMessage(msg)">
+                <strong>{{ getSenderName(getReplyMessage(msg)) }}</strong>
+                <p>{{ getMessageContent(getReplyMessage(msg)) }}</p>
             </div>
 
             <div class="message-content" *ngIf="!msg.isDeleted">
                 <div class="message-sender-name" *ngIf="chat.isGroupChat && !isMyMessage(msg)">
-                    {{ msg.sender?.username }}
+                    {{ getSenderName(msg) }}
                 </div>
                 {{ msg.content }}
                 <span class="message-time">{{ msg.createdAt | date:'shortTime' }}</span>
@@ -146,8 +146,8 @@
     <div class="footer">
         <div class="reply-preview-input" *ngIf="replyingTo">
             <div class="reply-info">
-                <span>Replying to <strong>{{ replyingTo.sender?.username || 'User' }}</strong></span>
-                <p>{{ replyingTo.content }}</p>
+                <span>Replying to <strong>{{ getSenderName(replyingTo) }}</strong></span>
+                <p>{{ getMessageContent(replyingTo) }}</p>
             </div>
             <button class="cancel-btn" (click)="cancelReply()">✕</button>
         </div>

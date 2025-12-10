@@ -21,4 +21,7 @@ const messageSchema = new mongoose.Schema({
   deletedAt: { type: Date }
 }, { timestamps: true });
 
+// Index for fetching messages by chat (most common query)
+messageSchema.index({ chat: 1 });
+
 module.exports = mongoose.model("Message", messageSchema);

@@ -1,9 +1,12 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewChecked, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewChecked, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { SocketService } from '../../services/socket.service';
 import { AuthService } from '../../services/auth.service';
+import { MessageService } from '../../services/message.service';
+import { Message, Chat, User } from '../../shared/models';
+import { getChatName, isMyMessage, getMessageStatus, hasUserReacted, getReactionCount, filterUnreadMessageIds, getReplyMessage, getSenderName, getMessageContent } from '../../shared/utils/chat.utils';
+import { scrollToBottom, copyToClipboard } from '../../shared/utils/dom.utils';
 
 @Component({
     selector: 'app-chat-window',
@@ -12,19 +15,18 @@ import { AuthService } from '../../services/auth.service';
     templateUrl: './chat-window.component.html',
     styleUrls: ['./chat-window.component.css']
 })
-export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked {
-    @Input() chat: any;
-    messages: any[] = [];
+export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked, OnDestroy {
+    @Input() chat: Chat | undefined;
+    messages: Message[] = [];
     newMessage: string = "";
-    currentUser: any;
+    currentUser: any; // AuthService likely returns generic object, keeping any for now or need to update AuthService
 
     typing: boolean = false;
     isTyping: boolean = false;
     typingUserName: string = '';
 
-    replyingTo: any = null;
-
-    editingMessage: any = null;
+    replyingTo: Message | null = null;
+    editingMessage: Message | null = null;
 
     showReactionPicker: { [key: string]: boolean } = {};
     availableReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
@@ -33,8 +35,15 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
 
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
+    rewriteSuggestions: any = null;
+    showRewritePopup: boolean = false;
+    isRewriting: boolean = false;
+    customRewritePrompt: string = '';
+
+    showChatInfo: boolean = false;
+
     constructor(
-        private http: HttpClient,
+        private messageService: MessageService,
         private socketService: SocketService,
         private authService: AuthService
     ) {
@@ -43,10 +52,10 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
 
     ngOnInit() {
         this.socketService.setup(this.currentUser);
-        this.socketService.messageReceived().subscribe((message: any) => {
-            if (this.chat && message.chat._id === this.chat._id) {
+        this.socketService.messageReceived().subscribe((message: Message) => {
+            if (this.chat && (message.chat as any)._id === this.chat._id) {
                 this.messages.push(message);
-                this.scrollToBottom();
+                setTimeout(() => scrollToBottom(this.scrollContainer), 0);
 
                 this.socketService.emitMessageDelivered(message._id, this.currentUser._id);
 
@@ -59,7 +68,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.socketService.typing().subscribe(() => {
             this.isTyping = true;
             if (this.chat && !this.chat.isGroupChat) {
-                const otherUser = this.chat.users.find((u: any) => u._id !== this.currentUser._id);
+                const otherUser = this.chat.users.find((u: User) => u._id !== this.currentUser._id);
                 this.typingUserName = otherUser ? otherUser.username : '';
             }
         });
@@ -125,12 +134,14 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     }
 
     ngAfterViewChecked() {
-        this.scrollToBottom();
+        scrollToBottom(this.scrollContainer);
     }
 
-    rewriteDebounceTimer: any;
+    resizeDebounceTimer: any; // Unused but kept if needed
 
     typingHandler() {
+        if (!this.chat) return;
+
         if (this.showRewritePopup) {
             this.showRewritePopup = false;
         }
@@ -146,21 +157,20 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         setTimeout(() => {
             var timeNow = new Date().getTime();
             var timeDiff = timeNow - lastTypingTime;
-            if (timeDiff >= timerLength && this.typing) {
+            if (timeDiff >= timerLength && this.typing && this.chat) {
                 this.socketService.stopTyping(this.chat._id);
                 this.typing = false;
             }
         }, timerLength);
-
-        // Auto-Trigger Rewrite Logic REMOVED to save API key quota
-        // Only trigger manually via button
     }
 
     fetchMessages() {
-        this.http.get(`http://localhost:3000/messages/${this.chat._id}`).subscribe({
-            next: (data: any) => {
+        if (!this.chat) return;
+        this.messageService.getMessages(this.chat._id).subscribe({
+            next: (data: Message[]) => {
                 this.messages = data;
-                this.scrollToBottom();
+                this.messages = data;
+                setTimeout(() => scrollToBottom(this.scrollContainer), 0);
 
                 setTimeout(() => this.markAllMessagesAsRead(), 500);
             },
@@ -171,9 +181,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     markAllMessagesAsRead() {
         if (!this.messages || this.messages.length === 0) return;
 
-        const unreadMessageIds = this.messages
-            .filter(msg => !this.isMyMessage(msg) && (!msg.readBy || !msg.readBy.includes(this.currentUser._id)))
-            .map(msg => msg._id);
+        const unreadMessageIds = filterUnreadMessageIds(this.messages, this.currentUser._id);
 
         if (unreadMessageIds.length > 0) {
             this.markMessagesAsRead(unreadMessageIds);
@@ -197,7 +205,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     }
 
     sendMessage() {
-        if (!this.newMessage.trim()) return;
+        if (!this.newMessage.trim() || !this.chat) return;
 
         if (this.editingMessage) {
             this.saveEdit();
@@ -207,36 +215,27 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.socketService.stopTyping(this.chat._id);
         this.typing = false;
 
-        const messageData: any = {
-            content: this.newMessage,
-            chatId: this.chat._id,
-            userId: this.currentUser._id
-        };
+        const replyToId = this.replyingTo ? this.replyingTo._id : undefined;
 
-        if (this.replyingTo) {
-            messageData.replyTo = this.replyingTo._id;
-        }
-
-        this.http.post('http://localhost:3000/messages', messageData).subscribe({
-            next: (data: any) => {
+        this.messageService.sendMessage(this.newMessage, this.chat._id, this.currentUser._id, replyToId).subscribe({
+            next: (data: Message | Message[]) => {
+                // Handle case where backend might return array (though service expects single)
+                // Assuming service implementation returns single message as per creating
                 if (Array.isArray(data)) {
-                    this.messages = data;
+                    this.messages = data; // Should not happen with current backend service logic but kept for safety
                 } else {
                     this.socketService.sendMessage(data);
                     this.messages.push(data);
                 }
                 this.newMessage = "";
                 this.replyingTo = null;
-                this.scrollToBottom();
+                this.newMessage = "";
+                this.replyingTo = null;
+                setTimeout(() => scrollToBottom(this.scrollContainer), 0);
             },
             error: (err) => console.error("Failed to send message", err)
         });
     }
-
-    rewriteSuggestions: any = null;
-    showRewritePopup: boolean = false;
-    isRewriting: boolean = false;
-    customRewritePrompt: string = '';
 
     requestRewrite() {
         if (!this.newMessage.trim() || this.newMessage.trim().length <= 3) return;
@@ -256,29 +255,30 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     }
 
     getChatName(): string {
-        if (!this.chat) return "";
-        if (this.chat.isGroupChat) {
-            return this.chat.chatName;
-        }
-        const otherUser = this.chat.users.find((u: any) => u._id !== this.currentUser._id);
-        return otherUser ? otherUser.username : "Unknown User";
+        return getChatName(this.chat!, this.currentUser._id);
     }
 
-    isMyMessage(msg: any): boolean {
-        return msg.sender._id === this.currentUser._id || msg.sender === this.currentUser._id;
+    isMyMessage(msg: Message): boolean {
+        return isMyMessage(msg, this.currentUser._id);
     }
 
-    getMessageStatus(msg: any): string {
-        if (!this.isMyMessage(msg)) return '';
-
-        return msg.status || 'sent';
+    getMessageStatus(msg: Message): string {
+        return getMessageStatus(msg, this.currentUser._id);
     }
 
-    scrollToBottom(): void {
-        try {
-            this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
-        } catch (err) { }
+    getReplyMessage(msg: Message): Message | undefined {
+        return getReplyMessage(msg);
     }
+
+    getSenderName(msg: Message | undefined | null): string {
+        return getSenderName(msg);
+    }
+
+    getMessageContent(msg: Message | undefined | null): string {
+        return getMessageContent(msg);
+    }
+
+
 
     toggleMessageMenu(messageId: string) {
         const currentState = this.showMessageMenu[messageId];
@@ -286,55 +286,46 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.showMessageMenu[messageId] = !currentState;
     }
 
-    showChatInfo: boolean = false;
-
     toggleChatDetails() {
         this.showChatInfo = !this.showChatInfo;
     }
 
-    copyMessage(message: any) {
+    copyMessage(message: Message) {
         if (!message || !message.content) return;
-        navigator.clipboard.writeText(message.content).then(() => {
-            console.log('Message copied to clipboard');
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-        });
+        copyToClipboard(message.content);
     }
 
     toggleReactionPicker(messageId: string) {
         this.showReactionPicker[messageId] = !this.showReactionPicker[messageId];
     }
 
-    addReaction(message: any, emoji: string) {
-        this.http.post(`http://localhost:3000/messages/${message._id}/reaction`, {
-            emoji,
-            userId: this.currentUser._id
-        }).subscribe({
+    addReaction(message: Message, emoji: string) {
+        if (!this.chat) return;
+        this.messageService.addReaction(message._id, emoji, this.currentUser._id).subscribe({
             next: (updatedMessage: any) => {
+                // updatedMessage from backend might be generic, ensuring types
                 const msg = this.messages.find(m => m._id === message._id);
                 if (msg) {
                     msg.reactions = updatedMessage.reactions;
                 }
-                this.socketService.emitReaction(message._id, emoji, this.currentUser._id, this.chat._id);
+                if (this.chat) {
+                    this.socketService.emitReaction(message._id, emoji, this.currentUser._id, this.chat._id);
+                }
                 this.showReactionPicker[message._id] = false;
             },
             error: (err) => console.error("Failed to add reaction", err)
         });
     }
 
-    hasUserReacted(message: any, emoji: string): boolean {
-        if (!message.reactions) return false;
-        const reaction = message.reactions.find((r: any) => r.emoji === emoji);
-        return reaction ? reaction.users.includes(this.currentUser._id) : false;
+    hasUserReacted(message: Message, emoji: string): boolean {
+        return hasUserReacted(message, emoji, this.currentUser._id);
     }
 
-    getReactionCount(message: any, emoji: string): number {
-        if (!message.reactions) return 0;
-        const reaction = message.reactions.find((r: any) => r.emoji === emoji);
-        return reaction ? reaction.users.length : 0;
+    getReactionCount(message: Message, emoji: string): number {
+        return getReactionCount(message, emoji);
     }
 
-    replyToMessage(message: any) {
+    replyToMessage(message: Message) {
         this.replyingTo = message;
         this.editingMessage = null;
     }
@@ -343,7 +334,7 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.replyingTo = null;
     }
 
-    startEdit(message: any) {
+    startEdit(message: Message) {
         if (!this.isMyMessage(message) || message.isDeleted) return;
 
         this.editingMessage = message;
@@ -352,20 +343,19 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
     }
 
     saveEdit() {
-        if (!this.editingMessage || !this.newMessage.trim()) return;
+        if (!this.editingMessage || !this.newMessage.trim() || !this.chat) return;
 
-        this.http.put(`http://localhost:3000/messages/${this.editingMessage._id}`, {
-            content: this.newMessage,
-            userId: this.currentUser._id
-        }).subscribe({
-            next: (updatedMessage: any) => {
-                const msg = this.messages.find(m => m._id === this.editingMessage._id);
+        this.messageService.editMessage(this.editingMessage._id, this.newMessage, this.currentUser._id).subscribe({
+            next: (updatedMessage: Message) => {
+                const msg = this.messages.find(m => m._id === (this.editingMessage as Message)._id);
                 if (msg) {
                     msg.content = updatedMessage.content;
                     msg.isEdited = true;
                     msg.editedAt = updatedMessage.editedAt;
                 }
-                this.socketService.emitMessageEdit(this.editingMessage._id, this.newMessage, this.chat._id);
+                if (this.chat) {
+                    this.socketService.emitMessageEdit(this.editingMessage!._id, this.newMessage, this.chat._id);
+                }
                 this.cancelEdit();
             },
             error: (err) => console.error("Failed to edit message", err)
@@ -377,21 +367,21 @@ export class ChatWindowComponent implements OnChanges, OnInit, AfterViewChecked 
         this.newMessage = '';
     }
 
-    deleteMessage(message: any) {
-        if (!this.isMyMessage(message) || message.isDeleted) return;
+    deleteMessage(message: Message) {
+        if (!this.isMyMessage(message) || message.isDeleted || !this.chat) return;
 
         if (!confirm('Are you sure you want to delete this message?')) return;
 
-        this.http.delete(`http://localhost:3000/messages/${message._id}`, {
-            body: { userId: this.currentUser._id }
-        }).subscribe({
+        this.messageService.deleteMessage(message._id, this.currentUser._id).subscribe({
             next: () => {
                 const msg = this.messages.find(m => m._id === message._id);
                 if (msg) {
                     msg.isDeleted = true;
                     msg.content = '';
                 }
-                this.socketService.emitMessageDelete(message._id, this.chat._id);
+                if (this.chat) {
+                    this.socketService.emitMessageDelete(message._id, this.chat._id);
+                }
             },
             error: (err) => console.error("Failed to delete message", err)
         });
