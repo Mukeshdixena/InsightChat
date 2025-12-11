@@ -25,7 +25,7 @@ connectDB().then(async () => {
 
 // Middleware
 app.use(cors({
-  origin: "*", // TODO: Configure this for production
+  origin: "*", // just for dev
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
